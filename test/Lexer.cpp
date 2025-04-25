@@ -1,5 +1,6 @@
 #include <vector>
 
+#include <strex/Exception.hpp>
 #include <strex/Lexer.hpp>
 #include <strex/Token.hpp>
 
@@ -8,10 +9,10 @@
 using namespace strex;
 
 TEST_CASE("token range") {
-    Lexer lexer(R"(\b\w\d\m\\\'\")");
+    Lexer lexer(R"(\b\w\d\\\'\")");
     auto tokens = lexer.tokenize();
-    std::vector<TextRange> expect_ranges = {{0, 2},  {2, 4},   {4, 6},   {6, 8},
-                                            {8, 10}, {10, 12}, {12, 14}, {14, 14}};
+    std::vector<TextRange> expect_ranges = {{0, 2},  {2, 4},   {4, 6},  {6, 8},
+                                            {8, 10}, {10, 12}, {12, 12}};
     CHECK(tokens.size() == expect_ranges.size());
     for (std::size_t i = 0; i < tokens.size(); i++) {
         CHECK(tokens[i].range().start == expect_ranges[i].start);
@@ -20,7 +21,7 @@ TEST_CASE("token range") {
 }
 
 TEST_CASE("backslash token type") {
-    Lexer lexer(R"(\d\D\s\S\w\W\b\B\f\n\r\t\v\m\y\\\'\")");
+    Lexer lexer(R"(\d\D\s\S\w\W\b\B\f\n\r\t\v\\\'\")");
     std::vector<TokenType> expect_types = {
         TokenType::Char_Class,    // \d
         TokenType::Char_Class,    // \D
@@ -35,8 +36,6 @@ TEST_CASE("backslash token type") {
         TokenType::Character,     // \r
         TokenType::Character,     // \t
         TokenType::Character,     // \v
-        TokenType::Character,     // m
-        TokenType::Character,     // y
         TokenType::Character,     // `\`
         TokenType::Character,     // '
         TokenType::Character,     // "
@@ -50,14 +49,19 @@ TEST_CASE("backslash token type") {
 }
 
 TEST_CASE("backslash token character") {
-    Lexer lexer(R"(\d\D\s\S\w\W\f\n\r\t\v\m\y\\\'\")");
-    std::vector<char> expect_characters = {'d',  'D',  's',  'S', 'w', 'W',  '\f', '\n',
-                                           '\r', '\t', '\v', 'm', 'y', '\\', '\'', '\"'};
+    Lexer lexer(R"(\d\D\s\S\w\W\f\n\r\t\v\\\'\")");
+    std::vector<char> expect_characters = {'d',  'D',  's',  'S',  'w',  'W',  '\f',
+                                           '\n', '\r', '\t', '\v', '\\', '\'', '\"'};
     auto tokens = lexer.tokenize();
     CHECK(tokens.size() == expect_characters.size() + 1);
     for (std::size_t i = 0; i < expect_characters.size(); i++) {
         CHECK(tokens[i].character() == expect_characters[i]);
     }
+}
+
+TEST_CASE("invalid escape character") {
+    Lexer lexer(R"(\d\n\m\y)");
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "invalid escape character \\m");
 }
 
 TEST_CASE("charset") {

@@ -12,6 +12,7 @@
 namespace strex {
 
 /// Split the raw regular expression into tokens.
+/// Use PCRE2 flavor.
 class Lexer {
  public:
     explicit Lexer(std::string regex);

@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include <strex/Exception.hpp>
 #include <strex/Lexer.hpp>
 #include <strex/Token.hpp>
 
@@ -69,8 +70,8 @@ auto strex::Lexer::backslash() -> Token {
         case '\"':
             return make_character('\"');
         default:
-            // invalid escaped character will be treated as normal character
-            return make_character(ch);
+            // invalid escape character
+            throw LexicalError("invalid escape character \\{}", ch);
     }
 }
 
