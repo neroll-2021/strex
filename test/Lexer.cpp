@@ -1,6 +1,6 @@
+#include <utility>
 #include <vector>
 
-#include <strex/Exception.hpp>
 #include <strex/Lexer.hpp>
 #include <strex/Token.hpp>
 
@@ -61,7 +61,18 @@ TEST_CASE("backslash token character") {
 
 TEST_CASE("invalid escape character") {
     Lexer lexer(R"(\d\n\m\y)");
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "invalid escape character \\m");
+    std::vector<TokenType> expect_types = {
+        TokenType::Char_Class, // \d
+        TokenType::Character,  // \n
+        TokenType::Character,  // \m
+        TokenType::Character,  // \y
+        TokenType::End,
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
 }
 
 TEST_CASE("charset") {
@@ -87,10 +98,10 @@ TEST_CASE("charset with ']' at the beginning") {
     std::vector<TokenType> expect_types = {
         TokenType::Char_Class,    // \d
         TokenType::Left_Bracket,  // [
-        TokenType::Character,     // ]
+        TokenType::Right_Bracket, // ]
         TokenType::Char_Class,    // \d
         TokenType::Character,     // `\\`
-        TokenType::Character,     // [
+        TokenType::Left_Bracket,  // [
         TokenType::Right_Bracket, // ]
         TokenType::Char_Class,    // \d
         TokenType::End,           // EOF
@@ -99,5 +110,62 @@ TEST_CASE("charset with ']' at the beginning") {
     CHECK(tokens.size() == expect_types.size());
     for (std::size_t i = 0; i < expect_types.size(); i++) {
         CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("parentheses in charset") {
+    Lexer lexer(R"([()]())");
+    std::vector<TokenType> expect_types = {
+        TokenType::Left_Bracket,  // [
+        TokenType::Character,     // (
+        TokenType::Character,     // )
+        TokenType::Right_Bracket, // ]
+        TokenType::Left_Paren,    // (
+        TokenType::Right_Paren,   // )
+        TokenType::End,           // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("backreference") {
+    Lexer lexer(R"(\1\2()\0\1\2\7\8\9\10\17\18\19\20\100\200\300\377\400\000)");
+    std::vector<std::pair<TokenType, char>> expect_types = {
+        {TokenType::Backreference, '\1'}, // \1
+        {TokenType::Character, '\2'},     // \2
+        {TokenType::Left_Paren, '\0'},    // (
+        {TokenType::Right_Paren, '\0'},   // )
+        {TokenType::Character, '\0'},     // \0
+        {TokenType::Backreference, '\0'}, // \1
+        {TokenType::Character, '\2'},     // \2
+        {TokenType::Character, '\7'},     // \7
+        {TokenType::Character, '8'},      // \8
+        {TokenType::Character, '9'},      // \9
+        {TokenType::Character, '\10'},    // \10
+        {TokenType::Character, '\17'},    // \17
+        {TokenType::Character, '\1'},     // \1
+        {TokenType::Character, '8'},      // 8
+        {TokenType::Character, '\1'},     // \1
+        {TokenType::Character, '9'},      // 9
+        {TokenType::Character, '\20'},    // \20
+        {TokenType::Character, '\100'},   // \100
+        {TokenType::Character, '\200'},   // \200
+        {TokenType::Character, '\300'},   // \300
+        {TokenType::Character, '\377'},   // \377
+        {TokenType::Character, '\40'},    // \40
+        {TokenType::Character, '0'},      // 0,
+        {TokenType::Character, '\0'},     // \000
+        {TokenType::End, '\0'},           // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
     }
 }

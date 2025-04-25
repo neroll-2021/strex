@@ -58,6 +58,6 @@ strex::Token::Token(int repeat_lower, int repeat_upper, const TextRange &range)
       repeat_upper_(repeat_upper) {}
 
 strex::Token::Token(int group_number, const TextRange &range)
-    : range_(range), group_number_(group_number) {}
+    : type_(TokenType::Backreference), range_(range), group_number_(group_number) {}
 
 strex::Token::Token(TokenType type, const TextRange &range) : type_(type), range_(range) {}

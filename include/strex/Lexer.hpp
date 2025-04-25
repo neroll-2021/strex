@@ -12,7 +12,7 @@
 namespace strex {
 
 /// Split the raw regular expression into tokens.
-/// Use PCRE2 flavor.
+/// Use ECMAScript flavor.
 class Lexer {
  public:
     explicit Lexer(std::string regex);
@@ -21,6 +21,10 @@ class Lexer {
     std::vector<Token> tokenize();
 
  private:
+    /// Check group count in regular expression.
+    /// Throws exception if there are unmatched parentheses.
+    void scan_groups();
+
     /// Returns the next token.
     Token next_token();
 
@@ -36,9 +40,21 @@ class Lexer {
     /// Returns a token with type `Right_Bracket` or `Character`
     Token right_bracket();
 
+    /// Proccess the left parenthesis.
+    /// Returns a token with type `Left_Paren` or `Character`.
+    Token left_paren();
+
+    /// Processes the right parenthesis.
+    /// Returns a token with type `Right_Paren` or `Character`.
+    Token right_paren();
+
     /// Processes a word boundary (`\b`, `\B`).
     /// If `\b` is in a charset, it will be treated as a character with ASCII 8,
     Token word_boundary(char ch);
+
+    /// Process the number after backslash.
+    /// Returns a token with type `Character` or `Backreference`.
+    Token number_after_backslash(char ch);
 
     /// Checks if current token is the first element in charset.
     bool is_first_in_charset() const;
@@ -48,6 +64,12 @@ class Lexer {
 
     /// Returns a token with type `Character` and given character.
     Token make_character(char ch) const;
+
+    /// Returns a token with type `Backreference`.
+    Token make_backreference(int group_number) const;
+
+    /// Returns a token with given type.
+    Token make_token(TokenType type) const;
 
     /// Returns text range of the token being processed.
     TextRange make_token_range() const;
@@ -71,7 +93,10 @@ class Lexer {
     std::size_t current_position_{0};           ///< current processing position
     std::size_t token_begin_position_{0};       ///< begin position of the token being processed
     const std::vector<Token> *tokens_{nullptr}; ///< tokens that has been processed
+    int group_depth_{0};                        ///< nest depth of groups
+    int group_count_{0};                        ///< the count of group that has been processed
     bool in_charset_{false};                    ///< if current token is in a charset
+    bool has_preprocessed_{false};              ///< if the regular expression has been preprocessed
 };
 
 } // namespace strex
