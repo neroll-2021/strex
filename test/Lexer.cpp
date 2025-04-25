@@ -59,3 +59,41 @@ TEST_CASE("backslash token character") {
         CHECK(tokens[i].character() == expect_characters[i]);
     }
 }
+
+TEST_CASE("charset") {
+    Lexer lexer(R"(\d[\d\\[])");
+    std::vector<TokenType> expect_types = {
+        TokenType::Char_Class,    // \d
+        TokenType::Left_Bracket,  // [
+        TokenType::Char_Class,    // \d
+        TokenType::Character,     // `\\`
+        TokenType::Character,     // [
+        TokenType::Right_Bracket, // ]
+        TokenType::End,           // EOF
+    };
+    auto tokens = lexer.tokenize();
+    CHECK(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < expect_types.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("charset with ']' at the beginning") {
+    Lexer lexer(R"(\d[]\d\\[]\d)");
+    std::vector<TokenType> expect_types = {
+        TokenType::Char_Class,    // \d
+        TokenType::Left_Bracket,  // [
+        TokenType::Character,     // ]
+        TokenType::Char_Class,    // \d
+        TokenType::Character,     // `\\`
+        TokenType::Character,     // [
+        TokenType::Right_Bracket, // ]
+        TokenType::Char_Class,    // \d
+        TokenType::End,           // EOF
+    };
+    auto tokens = lexer.tokenize();
+    CHECK(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < expect_types.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}

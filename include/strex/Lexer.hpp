@@ -25,11 +25,22 @@ class Lexer {
 
     /// Processes the character after a backslash.
     /// Maybe an escaped character, a character class, a word boundary, or a backreference.
-    Token backslash(bool in_charset);
+    Token backslash();
+
+    /// Process the left bracket.
+    /// Returns a token with type `Left_Bracket` or `Character`
+    Token left_bracket();
+
+    /// Process the right bracket.
+    /// Returns a token with type `Right_Bracket` or `Character`
+    Token right_bracket();
 
     /// Processes a word boundary (`\b`, `\B`).
     /// If `\b` is in a charset, it will be treated as a character with ASCII 8,
-    Token word_boundary(char ch, bool in_charset);
+    Token word_boundary(char ch);
+
+    /// Checks if current token is the first element in charset.
+    bool is_first_in_charset() const;
 
     /// Processes a character class, e.g., `\d`, `\w`, `\s`.
     Token make_char_class(char ch) const;
@@ -39,6 +50,9 @@ class Lexer {
 
     /// Returns text range of the token being processed.
     TextRange make_token_range() const;
+
+    /// Returns the previous token that has been processed.
+    const Token &prev_token() const;
 
     /// Returns the character in current position, not move forward.
     /// Returns '\0' if reaches the end.
@@ -52,9 +66,11 @@ class Lexer {
     /// @return Whether reaches the end or not
     bool is_end() const;
 
-    std::string regex_;                   ///< regular expression to be tokenized
-    std::size_t current_position_{0};     ///< current processing position
-    std::size_t token_begin_position_{0}; ///< begin position of the token being processed
+    std::string regex_;                         ///< regular expression to be tokenized
+    std::size_t current_position_{0};           ///< current processing position
+    std::size_t token_begin_position_{0};       ///< begin position of the token being processed
+    const std::vector<Token> *tokens_{nullptr}; ///< tokens that has been processed
+    bool in_charset_{false};                    ///< if current token is in a charset
 };
 
 } // namespace strex
