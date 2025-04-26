@@ -28,7 +28,7 @@ class Lexer {
     /// Returns the next token.
     Token next_token();
 
-    /// Processes the character after a backslash.
+    /// Processes the backslash.
     /// Maybe an escaped character, a character class, a word boundary, or a backreference.
     Token backslash();
 
@@ -48,9 +48,29 @@ class Lexer {
     /// Returns a token with type `Right_Paren` or `Character`.
     Token right_paren();
 
-    /// Process the left brace.
+    /// Processes the left brace.
     /// Returns a token with type `Character` or `Repeat`.
     Token left_brace();
+
+    /// Processes the asterisk character '*'.
+    /// Returns a token with type `Character` or `Star`.
+    Token asterisk();
+
+    /// Processes the plus character '+'.
+    /// Returns a token with `Character` or `Plus`.
+    Token plus();
+
+    /// Processes the vertical bar character '|'.
+    /// Returns a token with type `Character` or `Alternation`.
+    Token vertical_bar();
+
+    /// Processes the hyphen character '-'.
+    /// Returns a token with type `Character` or `Hyphen`.
+    Token hyphen();
+
+    /// Processes the question character '?'.
+    /// Returns a token with type `Character` ot `Question`.
+    Token question();
 
     /// Processes a word boundary (`\b`, `\B`).
     /// If `\b` is in a charset, it will be treated as a character with ASCII 8,
@@ -62,6 +82,12 @@ class Lexer {
 
     /// Returns a token with type `Character` or `Repeat`.
     Token repeat();
+
+    /// Processes extension such as `?:`, `?=`, `?!`.
+    Token extension();
+
+    /// Returns a token with type `Named_Capture_Group`.
+    Token named_capture_group();
 
     /// Checks if current token is the first element in charset.
     bool is_first_in_charset() const;

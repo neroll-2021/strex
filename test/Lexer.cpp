@@ -232,3 +232,96 @@ TEST_CASE("brace in charset") {
         CHECK(tokens[i].type() == expect_types[i]);
     }
 }
+
+TEST_CASE("characters") {
+    Lexer lexer(R"(*^|$+]})");
+    std::vector<TokenType> expect_types = {
+        TokenType::Star,        // *
+        TokenType::Caret,       // ^
+        TokenType::Alternation, // |
+        TokenType::Dollar,      // $
+        TokenType::Plus,        // +
+        TokenType::Character,   // ]
+        TokenType::Character,   // }
+        TokenType::End,         // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("trailing backslash") {
+    Lexer lexer(R"(\)");
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
+                            "pattern may not end with a trailing backslash");
+}
+
+TEST_CASE("hyphen") {
+    Lexer lexer(R"(-[-a-z-]-)");
+    std::vector<TokenType> expect_types = {
+        TokenType::Character,     // -
+        TokenType::Left_Bracket,  // [
+        TokenType::Character,     // -
+        TokenType::Character,     // a
+        TokenType::Hyphen,        // -
+        TokenType::Character,     // b
+        TokenType::Character,     // -
+        TokenType::Right_Bracket, // ]
+        TokenType::Character,     // -
+        TokenType::End,           // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("lazy") {
+    Lexer lexer(R"(+???*?)");
+    std::vector<TokenType> expect_types = {
+        TokenType::Plus,     // +?
+        TokenType::Question, // ??
+        TokenType::Star,     // *?
+        TokenType::End,      // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("extension") {
+    Lexer lexer(R"((?=)(?!)(?<=)(?<!)(?:))");
+    std::vector<TokenType> expect_types = {
+        TokenType::Left_Paren,          // (
+        TokenType::Positive_Lookahead,  // ?=
+        TokenType::Right_Paren,         // )
+        TokenType::Left_Paren,          // (
+        TokenType::Negative_Lookahead,  // ?!
+        TokenType::Right_Paren,         // )
+        TokenType::Left_Paren,          // (
+        TokenType::Positive_Lookbehind, // ?<=
+        TokenType::Right_Paren,         // )
+        TokenType::Left_Paren,          // (
+        TokenType::Negative_Lookbehind, // ?<!
+        TokenType::Right_Paren,         // )
+        TokenType::Left_Paren,          // (
+        TokenType::Non_Capturing_Group, // ?:
+        TokenType::Right_Paren,         // )
+        TokenType::End,                 // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("invalid extension") {
+    Lexer lexer(R"((?a))");
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unknown extension '?a'");
+}

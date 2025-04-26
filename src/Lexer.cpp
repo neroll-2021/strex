@@ -13,8 +13,15 @@
 strex::Lexer::Lexer(std::string regex) : regex_(std::move(regex)) {}
 
 void strex::Lexer::scan_groups() {
-    while (!next_token().is(TokenType::End))
-        continue;
+    std::vector<Token> tokens;
+    tokens_ = &tokens;
+    auto token = next_token();
+    while (!token.is(TokenType::End)) {
+        tokens.push_back(token);
+        token = next_token();
+    }
+    tokens.push_back(token);
+
     current_position_ = 0;
     token_begin_position_ = 0;
     in_charset_ = false;
@@ -58,6 +65,16 @@ auto strex::Lexer::next_token() -> Token {
             return right_paren();
         case '{':
             return left_brace();
+        case '*':
+            return asterisk();
+        case '+':
+            return plus();
+        case '|':
+            return vertical_bar();
+        case '-':
+            return hyphen();
+        case '?':
+            return question();
         case '^':
             return make_token(TokenType::Caret);
         case '$':
@@ -68,6 +85,9 @@ auto strex::Lexer::next_token() -> Token {
 }
 
 auto strex::Lexer::backslash() -> Token {
+    if (is_end())
+        throw LexicalError("pattern may not end with a trailing backslash");
+
     char ch = advance();
     switch (ch) {
         case 'd':
@@ -117,13 +137,13 @@ auto strex::Lexer::left_bracket() -> Token {
     if (in_charset_)
         return make_character('[');
     in_charset_ = true;
-    return Token::create(TokenType::Left_Bracket, make_token_range());
+    return make_token(TokenType::Left_Bracket);
 }
 
 auto strex::Lexer::right_bracket() -> Token {
     if (in_charset_) {
         in_charset_ = false;
-        return Token::create(TokenType::Right_Bracket, make_token_range());
+        return make_token(TokenType::Right_Bracket);
     }
     return make_character(']');
 }
@@ -149,7 +169,56 @@ auto strex::Lexer::right_paren() -> Token {
 auto strex::Lexer::left_brace() -> Token {
     if (in_charset_)
         return make_character('{');
-    return repeat();
+    Token token = repeat();
+    if (!token.is(TokenType::Character) && !is_end() && peek() == '?')
+        advance();
+    return token;
+}
+
+auto strex::Lexer::asterisk() -> Token {
+    if (in_charset_)
+        return make_character('*');
+    if (!is_end() && peek() == '?') { // *? lazy match
+        advance();
+        return make_token(TokenType::Star);
+    }
+    return make_token(TokenType::Star);
+}
+
+auto strex::Lexer::plus() -> Token {
+    if (in_charset_)
+        return make_character('+');
+    if (!is_end() && peek() == '?') { // +? lazy match
+        advance();
+        return make_token(TokenType::Plus);
+    }
+    return make_token(TokenType::Plus);
+}
+
+auto strex::Lexer::vertical_bar() -> Token {
+    if (in_charset_)
+        return make_character('|');
+    return make_token(TokenType::Alternation);
+}
+
+auto strex::Lexer::hyphen() -> Token {
+    if (in_charset_ && is_first_in_charset())
+        return make_character('-');
+    if (in_charset_ && !is_end() && peek() == ']')
+        return make_character('-');
+    if (in_charset_)
+        return make_token(TokenType::Hyphen);
+    return make_character('-');
+}
+
+auto strex::Lexer::question() -> Token {
+    if (!tokens_->empty() && prev_token().is(TokenType::Left_Paren))
+        return extension();
+    if (in_charset_)
+        return make_character('?');
+    if (!is_end() && peek() == '?')
+        advance();
+    return make_token(TokenType::Question);
 }
 
 auto strex::Lexer::word_boundary(char ch) -> Token {
@@ -324,6 +393,39 @@ auto strex::Lexer::repeat() -> Token {
         current_position_ = position;
         return make_character('{');
     }
+}
+
+auto strex::Lexer::extension() -> Token {
+    char ext = advance();
+    switch (ext) {
+        case ':':
+            return make_token(TokenType::Non_Capturing_Group);
+        case '=':
+            return make_token(TokenType::Positive_Lookahead);
+        case '!':
+            return make_token(TokenType::Negative_Lookahead);
+        case '<':
+            ext = peek();
+            if (ext == '=') {
+                advance();
+                return make_token(TokenType::Positive_Lookbehind);
+            }
+            if (ext == '!') {
+                advance();
+                return make_token(TokenType::Negative_Lookbehind);
+            }
+            // Named capture group is not support yet.
+            // if (is_alpha(ext))
+            //     return named_capture_group();
+            throw LexicalError("unknown extension '?<{}'", ext);
+        default:
+            throw LexicalError("unknown extension '?{}'", ext);
+    }
+}
+
+auto strex::Lexer::named_capture_group() -> Token {
+    // TODO
+    return make_token(TokenType::Error);
 }
 
 bool strex::Lexer::is_first_in_charset() const {

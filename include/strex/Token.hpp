@@ -23,6 +23,7 @@ enum class TokenType {
     Word_Boundary, ///< `\b`
 
     Non_Capturing_Group, ///< `(?:...)`
+    Named_Capture_Group, ///< `(?<name>...)`
     Positive_Lookahead,  ///< `(?=...)`
     Negative_Lookahead,  ///< `(?!...)`
     Positive_Lookbehind, ///< `(?<=...)`
