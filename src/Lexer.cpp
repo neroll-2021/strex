@@ -76,6 +76,8 @@ auto strex::Lexer::next_token() -> Token {
             return hyphen();
         case '?':
             return question();
+        case '.':
+            return dot();
         case '^':
             return make_token(TokenType::Caret);
         case '$':
@@ -224,6 +226,12 @@ auto strex::Lexer::question() -> Token {
     if (!is_end() && peek() == '?')
         advance();
     return make_token(TokenType::Question);
+}
+
+auto strex::Lexer::dot() -> Token {
+    if (in_charset_)
+        return make_character('.');
+    return make_char_class('.');
 }
 
 auto strex::Lexer::word_boundary(char ch) -> Token {

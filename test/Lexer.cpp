@@ -369,3 +369,23 @@ TEST_CASE("unsupported hex value") {
     Lexer lexer(R"(\uffff)");
     CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unsupported hex value 0xffff");
 }
+
+TEST_CASE("dot") {
+    Lexer lexer(R"(\.[\..].)");
+    std::vector<std::pair<TokenType, char>> expect_types = {
+        {TokenType::Character, '.'},     // \.
+        {TokenType::Left_Bracket, '['},  // [
+        {TokenType::Character, '.'},     // \.
+        {TokenType::Character, '.'},     // .
+        {TokenType::Right_Bracket, ']'}, // ]
+        {TokenType::Char_Class, '.'},    // .
+        {TokenType::End, '\0'},          // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character) || tokens[i].is(TokenType::Char_Class))
+            CHECK(tokens[i].character() == expect_types[i].second);
+    }
+}
