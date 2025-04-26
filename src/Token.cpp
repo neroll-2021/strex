@@ -30,6 +30,7 @@ auto strex::Token::create(TokenType type, const TextRange &range) -> Token {
 
 int strex::Token::repeat_lower() const {
     assert(is(TokenType::Repeat));
+    assert(repeat_lower_ != -1 && "repeat lower -1 should be adjusted to 0 in Lexer");
     return repeat_lower_;
 }
 

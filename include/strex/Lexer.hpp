@@ -48,6 +48,10 @@ class Lexer {
     /// Returns a token with type `Right_Paren` or `Character`.
     Token right_paren();
 
+    /// Process the left brace.
+    /// Returns a token with type `Character` or `Repeat`.
+    Token left_brace();
+
     /// Processes a word boundary (`\b`, `\B`).
     /// If `\b` is in a charset, it will be treated as a character with ASCII 8,
     Token word_boundary(char ch);
@@ -55,6 +59,9 @@ class Lexer {
     /// Process the number after backslash.
     /// Returns a token with type `Character` or `Backreference`.
     Token number_after_backslash(char ch);
+
+    /// Returns a token with type `Character` or `Repeat`.
+    Token repeat();
 
     /// Checks if current token is the first element in charset.
     bool is_first_in_charset() const;
@@ -68,6 +75,9 @@ class Lexer {
     /// Returns a token with type `Backreference`.
     Token make_backreference(int group_number) const;
 
+    /// Returns a token with type `Repeat`.
+    Token make_repeat(int repeat_lower, int repeat_upper) const;
+
     /// Returns a token with given type.
     Token make_token(TokenType type) const;
 
@@ -78,11 +88,9 @@ class Lexer {
     const Token &prev_token() const;
 
     /// Returns the character in current position, not move forward.
-    /// Returns '\0' if reaches the end.
     char peek() const;
 
     /// Returns the character in current position and move forward for one character.
-    /// Returns '\0' if reaches the end, and won't move forward.
     char advance();
 
     /// Checks if it has been processed to the end of the regular expression

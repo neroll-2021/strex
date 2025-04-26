@@ -1,5 +1,8 @@
 #include <cassert>
+#include <charconv>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <type_traits>
 #include <vector>
 
@@ -53,6 +56,12 @@ auto strex::Lexer::next_token() -> Token {
             return left_paren();
         case ')':
             return right_paren();
+        case '{':
+            return left_brace();
+        case '^':
+            return make_token(TokenType::Caret);
+        case '$':
+            return make_token(TokenType::Dollar);
         default:
             return make_character(ch);
     }
@@ -99,7 +108,7 @@ auto strex::Lexer::backslash() -> Token {
         case '9':
             return number_after_backslash(ch);
         default:
-            // other escape character is treated as normal character, e.g., \(, \$
+            // other escape characters are treated as normal characters, e.g., \(, \$
             return make_character(ch);
     }
 }
@@ -135,6 +144,12 @@ auto strex::Lexer::right_paren() -> Token {
         throw LexicalError("unmatched parenthesis ')'");
     group_depth_--;
     return make_token(TokenType::Right_Paren);
+}
+
+auto strex::Lexer::left_brace() -> Token {
+    if (in_charset_)
+        return make_character('{');
+    return repeat();
 }
 
 auto strex::Lexer::word_boundary(char ch) -> Token {
@@ -248,6 +263,69 @@ auto strex::Lexer::number_after_backslash(char ch) -> Token {
     return make_character(static_cast<char>(octal_value(first_digit, second_digit, third_digit)));
 }
 
+// convert string to int
+static int to_repeat_count(std::string_view str);
+
+auto strex::Lexer::repeat() -> Token {
+    std::size_t position = current_position_;
+
+    std::string count_str;
+    while (is_digit(peek())) {
+        count_str.push_back(advance());
+    }
+
+    char ch = advance();
+    int repeat_lower = -1;
+    int repeat_upper = -1;
+    if (ch == ',') {
+        if (!count_str.empty()) {
+            repeat_lower = to_repeat_count(count_str);
+        }
+    } else if (ch == '}') {
+        if (count_str.empty()) {
+            current_position_ = position;
+            return make_character('{');
+        }
+        repeat_lower = to_repeat_count(count_str);
+        repeat_upper = repeat_lower;
+        return make_repeat(repeat_lower, repeat_upper);
+    } else {
+        current_position_ = position;
+        return make_character('{');
+    }
+
+    count_str.clear();
+    while (is_digit(peek())) {
+        count_str.push_back(advance());
+    }
+    ch = advance();
+    if (ch == '}') {
+        if (count_str.empty())
+            repeat_upper = -1;
+        else
+            repeat_upper = to_repeat_count(count_str);
+
+        if (repeat_lower == -1 && repeat_upper == -1) {
+            current_position_ = position;
+            return make_character('{');
+        }
+
+        if (repeat_lower == -1)
+            repeat_lower = 0;
+        if (repeat_upper == -1)
+            return make_repeat(repeat_lower, repeat_upper);
+
+        if (repeat_lower > repeat_upper)
+            throw LexicalError(
+                "invalid repeat quantifier: lower bound {} is greater than upper bound {}",
+                repeat_lower, repeat_upper);
+        return make_repeat(repeat_lower, repeat_upper);
+    } else {
+        current_position_ = position;
+        return make_character('{');
+    }
+}
+
 bool strex::Lexer::is_first_in_charset() const {
     assert(tokens_ != nullptr);
     return !tokens_->empty() && prev_token().is(TokenType::Left_Bracket);
@@ -263,6 +341,10 @@ auto strex::Lexer::make_character(char ch) const -> Token {
 
 auto strex::Lexer::make_backreference(int group_number) const -> Token {
     return Token::create_backreference(group_number, make_token_range());
+}
+
+auto strex::Lexer::make_repeat(int repeat_lower, int repeat_upper) const -> Token {
+    return Token::create_repeat(repeat_lower, repeat_upper, make_token_range());
 }
 
 auto strex::Lexer::make_token(TokenType type) const -> Token {
@@ -307,4 +389,13 @@ int decimal_value(char first, char second) {
 
 constexpr int pow_of_10(int n) {
     return n == 0 ? 1 : 10 * pow_of_10(n - 1);
+}
+
+int to_repeat_count(std::string_view str) {
+    int result = -1;
+    auto [_, ec] = std::from_chars(str.data(), str.data() + str.size(), result);
+    if (ec == std::errc::result_out_of_range)
+        throw strex::LexicalError("repeat count too large: {}", str);
+    assert(ec != std::errc::invalid_argument);
+    return result;
 }

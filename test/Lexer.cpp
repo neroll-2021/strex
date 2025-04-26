@@ -1,6 +1,8 @@
 #include <utility>
 #include <vector>
 
+#include <strex/Exception.hpp>
+#include <strex/Format.hpp>
 #include <strex/Lexer.hpp>
 #include <strex/Token.hpp>
 
@@ -167,5 +169,66 @@ TEST_CASE("backreference") {
         if (tokens[i].is(TokenType::Character)) {
             CHECK(tokens[i].character() == expect_types[i].second);
         }
+    }
+}
+
+TEST_CASE("repeat") {
+    Lexer lexer(R"(a{100,200}b{1,}c{,10}d{5}e{1, 2}f{,}g{})");
+    std::vector<std::pair<TokenType, std::pair<int, int>>> expect_types = {
+        {TokenType::Character, {}},      // a
+        {TokenType::Repeat, {100, 200}}, // {100,200}
+        {TokenType::Character, {}},      // b
+        {TokenType::Repeat, {1, -1}},    // {1,}
+        {TokenType::Character, {}},      // c
+        {TokenType::Repeat, {0, 10}},    // {,10}
+        {TokenType::Character, {}},      // d
+        {TokenType::Repeat, {5, 5}},     // {5}
+        {TokenType::Character, {}},      // e
+        {TokenType::Character, {}},      // {
+        {TokenType::Character, {}},      // 1
+        {TokenType::Character, {}},      // ,
+        {TokenType::Character, {}},      // ' '
+        {TokenType::Character, {}},      // 2
+        {TokenType::Character, {}},      // }
+        {TokenType::Character, {}},      // f
+        {TokenType::Character, {}},      // {
+        {TokenType::Character, {}},      // ,
+        {TokenType::Character, {}},      // }
+        {TokenType::Character, {}},      // g
+        {TokenType::Character, {}},      // {
+        {TokenType::Character, {}},      // }
+        {TokenType::End, {}},            //    EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Repeat)) {
+            CHECK(tokens[i].repeat_lower() == expect_types[i].second.first);
+            CHECK(tokens[i].repeat_upper() == expect_types[i].second.second);
+        }
+    }
+}
+
+TEST_CASE("invalid repeat range") {
+    Lexer lexer(R"(a{2,1})");
+    CHECK_THROWS_AS_MESSAGE(
+        lexer.tokenize(), LexicalError,
+        "invalid repeat quantifier: lower bound 2 is greater than upper bound 1");
+}
+
+TEST_CASE("brace in charset") {
+    Lexer lexer(R"([{}])");
+    std::vector<TokenType> expect_types = {
+        TokenType::Left_Bracket,  // [
+        TokenType::Character,     // {
+        TokenType::Character,     // }
+        TokenType::Right_Bracket, // ]
+        TokenType::End,           // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
     }
 }
