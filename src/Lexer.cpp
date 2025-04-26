@@ -4,6 +4,7 @@
 #include <string_view>
 #include <system_error>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include <strex/Exception.hpp>
@@ -127,6 +128,10 @@ auto strex::Lexer::backslash() -> Token {
         case '8':
         case '9':
             return number_after_backslash(ch);
+        case 'x':
+            return hex_number(ch, 2);
+        case 'u':
+            return hex_number(ch, 4);
         default:
             // other escape characters are treated as normal characters, e.g., \(, \$
             return make_character(ch);
@@ -332,6 +337,35 @@ auto strex::Lexer::number_after_backslash(char ch) -> Token {
     return make_character(static_cast<char>(octal_value(first_digit, second_digit, third_digit)));
 }
 
+// Checks if a character is a valid hex character.
+static bool is_hex(char ch);
+
+constexpr int hex_value(char ch);
+
+auto strex::Lexer::hex_number(char prev, int digit) -> Token {
+    assert(prev == 'x' || prev == 'u');
+    assert(digit == 2 || digit == 4);
+
+    if (!is_hex(peek()))
+        return make_character(prev);
+
+    std::size_t position = current_position_;
+
+    int value = 0;
+    for (int i = 0; i < digit; i++) {
+        char ch = advance();
+        if (!is_hex(ch)) {
+            current_position_ = position;
+            return make_character(prev);
+        }
+        value = value * 16 + hex_value(ch);
+    }
+
+    if (value > 255)
+        throw LexicalError("unsupported hex value {:x}", value);
+    return make_character(static_cast<char>(value));
+}
+
 // convert string to int
 static int to_repeat_count(std::string_view str);
 
@@ -500,4 +534,19 @@ int to_repeat_count(std::string_view str) {
         throw strex::LexicalError("repeat count too large: {}", str);
     assert(ec != std::errc::invalid_argument);
     return result;
+}
+
+bool is_hex(char ch) {
+    return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
+}
+
+constexpr int hex_value(char ch) {
+    assert(is_hex(ch));
+    if (ch >= '0' && ch <= '9')
+        return ch - '0';
+    if (ch >= 'a' && ch <= 'f')
+        return 10 + ch - 'a';
+    if (ch >= 'A' && ch <= 'F')
+        return 10 + ch - 'A';
+    std::unreachable();
 }

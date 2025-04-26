@@ -76,9 +76,13 @@ class Lexer {
     /// If `\b` is in a charset, it will be treated as a character with ASCII 8,
     Token word_boundary(char ch);
 
-    /// Process the number after backslash.
+    /// Processes the number after backslash.
     /// Returns a token with type `Character` or `Backreference`.
     Token number_after_backslash(char ch);
+
+    /// Processes the hex number after `\x` or `\u`.
+    /// Returns a token with type `Character`.
+    Token hex_number(char prev, int digit);
 
     /// Returns a token with type `Character` or `Repeat`.
     Token repeat();

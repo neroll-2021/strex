@@ -197,7 +197,7 @@ TEST_CASE("repeat") {
         {TokenType::Character, {}},      // g
         {TokenType::Character, {}},      // {
         {TokenType::Character, {}},      // }
-        {TokenType::End, {}},            //    EOF
+        {TokenType::End, {}},            // EOF
     };
     auto tokens = lexer.tokenize();
     REQUIRE(tokens.size() == expect_types.size());
@@ -324,4 +324,48 @@ TEST_CASE("extension") {
 TEST_CASE("invalid extension") {
     Lexer lexer(R"((?a))");
     CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unknown extension '?a'");
+}
+
+TEST_CASE("hex number2") {
+    Lexer lexer(R"(\x00\xff\x1f\x1g\xg1)");
+    std::vector<std::pair<TokenType, char>> expect_types = {
+        {TokenType::Character, '\0'},   // \x00
+        {TokenType::Character, '\xff'}, // \xff
+        {TokenType::Character, '\x1f'}, // \x1f
+        {TokenType::Character, 'x'},    // \x
+        {TokenType::Character, '1'},    // 1
+        {TokenType::Character, 'g'},    // g
+        {TokenType::Character, 'x'},    // \x
+        {TokenType::Character, 'g'},    // g
+        {TokenType::Character, '1'},    // 1
+        {TokenType::End, '\0'},         // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character))
+            CHECK(tokens[i].character() == expect_types[i].second);
+    }
+}
+
+TEST_CASE("hex number4") {
+    Lexer lexer(R"(\u0000\u00ff)");
+    std::vector<std::pair<TokenType, char>> expect_types = {
+        {TokenType::Character, '\0'},   // \u0000
+        {TokenType::Character, '\xff'}, // \u00ff
+        {TokenType::End, '\0'},         // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character))
+            CHECK(tokens[i].character() == expect_types[i].second);
+    }
+}
+
+TEST_CASE("unsupported hex value") {
+    Lexer lexer(R"(\uffff)");
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unsupported hex value 0xffff");
 }
