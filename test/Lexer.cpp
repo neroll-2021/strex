@@ -61,6 +61,27 @@ TEST_CASE("backslash token character") {
     }
 }
 
+TEST_CASE("escape character in charset") {
+    Lexer lexer(R"([ \ \t\n])");
+    std::vector<std::pair<TokenType, char>> expect_types = {
+        {TokenType::Left_Bracket, '['},  // [
+        {TokenType::Character, ' '},     // ' '
+        {TokenType::Character, ' '},     // \' '
+        {TokenType::Character, '\t'},    // \t
+        {TokenType::Character, '\n'},    // \n
+        {TokenType::Right_Bracket, ']'}, // ]
+        {TokenType::End, '\0'},
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
+    }
+}
+
 TEST_CASE("invalid escape character") {
     Lexer lexer(R"(\d\n\m\y)");
     std::vector<TokenType> expect_types = {

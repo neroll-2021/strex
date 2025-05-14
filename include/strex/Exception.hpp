@@ -14,6 +14,13 @@ class LexicalError : public std::runtime_error {
         : std::runtime_error(std::format(fmt, std::forward<Args>(args)...)) {}
 };
 
+class ParseError : public std::runtime_error {
+ public:
+    template <typename... Args>
+    explicit ParseError(std::format_string<Args...> fmt, Args &&...args)
+        : std::runtime_error(std::format(fmt, std::forward<Args>(args)...)) {}
+};
+
 } // namespace strex
 
 #endif
