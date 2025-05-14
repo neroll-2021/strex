@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cctype>
 #include <charconv>
 #include <string>
 #include <string_view>
@@ -83,7 +84,7 @@ auto strex::Lexer::next_token() -> Token {
         case '$':
             return make_token(TokenType::Dollar);
         default:
-            return make_character(ch);
+            return character(ch);
     }
 }
 
@@ -232,6 +233,12 @@ auto strex::Lexer::dot() -> Token {
     if (in_charset_)
         return make_character('.');
     return make_char_class('.');
+}
+
+auto strex::Lexer::character(char ch) -> Token {
+    if (in_charset_ && !isascii(ch))
+        throw LexicalError("non-ascii character in charset is not supported");
+    return make_character(ch);
 }
 
 auto strex::Lexer::word_boundary(char ch) -> Token {

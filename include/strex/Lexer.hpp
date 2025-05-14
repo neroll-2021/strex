@@ -76,6 +76,10 @@ class Lexer {
     /// Returns a token with type `Character` or `Char_Class`.
     Token dot();
 
+    /// Processes the character.
+    /// Checks if the character is valid, returns a token with type `Character`.
+    Token character(char ch);
+
     /// Processes a word boundary (`\b`, `\B`).
     /// If `\b` is in a charset, it will be treated as a character with ASCII 8,
     Token word_boundary(char ch);

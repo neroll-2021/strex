@@ -389,3 +389,27 @@ TEST_CASE("dot") {
             CHECK(tokens[i].character() == expect_types[i].second);
     }
 }
+
+TEST_CASE("non-ascii") {
+    Lexer lexer(R"(你好)");
+    std::vector<TokenType> expect_types = {
+        TokenType::Character,
+        TokenType::Character,
+        TokenType::Character,
+        TokenType::Character,
+        TokenType::Character,
+        TokenType::Character,
+        TokenType::End,
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("non-ascii in charset") {
+    Lexer lexer("[你好]");
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
+                            "non-ascii character in charset is not supported");
+}
