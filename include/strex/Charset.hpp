@@ -33,6 +33,8 @@ class Charset {
 
     static const Charset &any();
 
+    bool is_inclusive() const { return is_inclusive_; }
+
     std::string_view alphabet() const { return alphabet_; }
 
     bool operator<(const Charset &other) const;

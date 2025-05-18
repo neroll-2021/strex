@@ -31,7 +31,7 @@ target("test")
     add_includedirs("include")
     for _, file in ipairs(os.files("test/*.cpp")) do
         add_tests(path.basename(file), {
-            files = file,
+            files = { file, "test/helper/*.cpp" },
             packages = "doctest",
             defines = "DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN"
         })
