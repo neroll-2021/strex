@@ -13,7 +13,7 @@ namespace strex {
 enum class TokenType {
 
     Character,  ///< any "non-special" character
-    Char_Class, ///< `\w`, `\d`, etc.
+    Char_Class, ///< `\w`, `\d`, `.`, etc.
 
     Star,     ///< `*`
     Plus,     ///< `+`

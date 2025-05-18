@@ -11,7 +11,7 @@ struct TextRange {
 
     TextRange() = default;
 
-    TextRange(std::size_t start, std::size_t end) : start(start), end(end) { assert(start < end); }
+    TextRange(std::size_t start, std::size_t end) : start(start), end(end) {}
 
     std::size_t start;
     std::size_t end;

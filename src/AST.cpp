@@ -3,13 +3,18 @@
 #include <vector>
 
 #include <strex/AST.hpp>
+#include <strex/Charset.hpp>
 #include <strex/Exception.hpp>
 #include <strex/TextRange.hpp>
 #include <strex/Token.hpp>
 #include <strex/Utils.hpp>
 
+strex::TextNode::TextNode(char text, const TextRange &range) : range_(range), text_(1, text) {}
+
 strex::TextNode::TextNode(std::string text, const TextRange &range)
     : range_(range), text_(std::move(text)) {}
+
+strex::CharsetNode::CharsetNode(const Charset &charset) : charset_(&charset) {}
 
 strex::SequenceNode::SequenceNode(std::vector<std::unique_ptr<ASTNode>> nodes,
                                   const TextRange &range)
@@ -29,3 +34,7 @@ int strex::GroupNode::create_index() {
         throw ParseError("group number reaches limit {}", max_group_number);
     return group_number;
 }
+
+strex::AlternationNode::AlternationNode(std::unique_ptr<ASTNode> left,
+                                        std::unique_ptr<ASTNode> right, const TextRange &range)
+    : range_(range), left_(std::move(left)), right_(std::move(right)) {}

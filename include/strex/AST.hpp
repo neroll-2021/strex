@@ -19,6 +19,8 @@ class ASTNode {
 /// Represents a plain character.
 class TextNode : public ASTNode {
  public:
+    TextNode(char text, const TextRange &range);
+
     TextNode(std::string text, const TextRange &range);
 
     std::string text() const { return text_; }

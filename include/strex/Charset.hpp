@@ -11,6 +11,8 @@ class Charset {
     // TODO Maybe can use enum instead of bool parameter.
     static const Charset &get(std::string alphabet, bool is_inclusive = true);
 
+    static const Charset &from_char_class(char char_class);
+
     /// \d, [0-9]
     static const Charset &digits();
 
@@ -28,6 +30,8 @@ class Charset {
 
     /// \S, [^ \t\r\n]
     static const Charset &non_space();
+
+    static const Charset &any();
 
     std::string_view alphabet() const { return alphabet_; }
 
