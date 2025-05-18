@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <strex/Charset.hpp>
+#include <strex/TextRange.hpp>
 #include <strex/Token.hpp>
 
 namespace strex {

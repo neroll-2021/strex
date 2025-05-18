@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include <strex/TextRange.hpp>
 #include <strex/Token.hpp>
 
 auto strex::Token::create_character(char ch, const TextRange &range) -> Token {

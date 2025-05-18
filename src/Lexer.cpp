@@ -10,6 +10,7 @@
 
 #include <strex/Exception.hpp>
 #include <strex/Lexer.hpp>
+#include <strex/TextRange.hpp>
 #include <strex/Token.hpp>
 
 strex::Lexer::Lexer(std::string regex) : regex_(std::move(regex)) {}

@@ -4,6 +4,7 @@
 #include <strex/Exception.hpp>
 #include <strex/Format.hpp>
 #include <strex/Lexer.hpp>
+#include <strex/TextRange.hpp>
 #include <strex/Token.hpp>
 
 #include <doctest/doctest.h>

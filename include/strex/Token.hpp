@@ -5,6 +5,8 @@
 
 #include <string>
 
+#include <strex/TextRange.hpp>
+
 namespace strex {
 
 /// Types of tokens.
@@ -43,17 +45,6 @@ enum class TokenType {
 
     Error, ///< Error token
     End,   ///< End of input
-};
-
-/// A [start, end) range in regular expression, counted by byte offset, 0-based.
-struct TextRange {
-
-    TextRange() = default;
-
-    TextRange(std::size_t start, std::size_t end) : start(start), end(end) {}
-
-    std::size_t start;
-    std::size_t end;
 };
 
 /// Basic element to be processed extracted from raw regular expression.
