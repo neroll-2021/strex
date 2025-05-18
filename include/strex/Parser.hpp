@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <span>
+#include <string_view>
 
 #include <strex/AST.hpp>
 #include <strex/Token.hpp>
@@ -22,11 +23,17 @@ class Parser {
  private:
     std::unique_ptr<ASTNode> disjunction();
 
+    std::unique_ptr<ASTNode> concat();
+
     std::unique_ptr<ASTNode> alternative();
 
     std::unique_ptr<ASTNode> term();
 
     std::unique_ptr<ASTNode> atom();
+
+    bool is_atom(TokenType type) const;
+
+    const Token &consume(TokenType expect, std::string_view message);
 
     /// Moves forward for one token if current token has expected type.
     /// Do nothing if the type of current token is not expected.

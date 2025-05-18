@@ -28,7 +28,6 @@ void strex::Lexer::scan_groups() {
     current_position_ = 0;
     token_begin_position_ = 0;
     in_charset_ = false;
-    group_depth_ = 0;
     tokens_ = nullptr;
     has_preprocessed_ = true;
 }
@@ -44,7 +43,6 @@ auto strex::Lexer::tokenize() -> std::vector<Token> {
     }
     tokens.push_back(token);
     tokens_ = nullptr;
-    assert(group_depth_ == 0);
     return tokens;
 }
 
@@ -160,7 +158,6 @@ auto strex::Lexer::right_bracket() -> Token {
 auto strex::Lexer::left_paren() -> Token {
     if (in_charset_)
         return make_character('(');
-    group_depth_++;
     if (!has_preprocessed_)
         group_count_++;
     return make_token(TokenType::Left_Paren);
@@ -169,9 +166,6 @@ auto strex::Lexer::left_paren() -> Token {
 auto strex::Lexer::right_paren() -> Token {
     if (in_charset_)
         return make_character(')');
-    if (group_depth_ <= 0)
-        throw LexicalError("unmatched parenthesis ')'");
-    group_depth_--;
     return make_token(TokenType::Right_Paren);
 }
 

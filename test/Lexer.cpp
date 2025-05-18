@@ -194,6 +194,32 @@ TEST_CASE("backreference") {
     }
 }
 
+TEST_CASE("backreference2") {
+    Lexer lexer(R"(\0\1\2\3\4(())())");
+    std::vector<std::pair<TokenType, char>> expect_types = {
+        {TokenType::Character, '\0'},     // \0
+        {TokenType::Backreference, '\0'}, // \1
+        {TokenType::Backreference, '\0'}, // \2
+        {TokenType::Backreference, '\0'}, // \3
+        {TokenType::Character, '\4'},     // \4
+        {TokenType::Left_Paren, '\0'},    // (
+        {TokenType::Left_Paren, '\0'},    // (
+        {TokenType::Right_Paren, '\0'},   // )
+        {TokenType::Right_Paren, '\0'},   // )
+        {TokenType::Left_Paren, '\0'},    // (
+        {TokenType::Right_Paren, '\0'},  // )
+        {TokenType::End, '\0'},
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
+    }
+}
+
 TEST_CASE("repeat") {
     Lexer lexer(R"(a{100,200}b{1,}c{,10}d{5}e{1, 2}f{,}g{})");
     std::vector<std::pair<TokenType, std::pair<int, int>>> expect_types = {

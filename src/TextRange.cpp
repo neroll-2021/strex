@@ -3,7 +3,7 @@
 
 #include <strex/TextRange.hpp>
 
-auto strex::union_range(const TextRange &x, const TextRange &y) -> TextRange {
+auto strex::range_union(const TextRange &x, const TextRange &y) -> TextRange {
     auto start = std::min(x.start, y.start);
     auto end = std::max(x.end, y.end);
     return {start, end};

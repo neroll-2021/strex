@@ -14,7 +14,8 @@ strex::TextNode::TextNode(char text, const TextRange &range) : range_(range), te
 strex::TextNode::TextNode(std::string text, const TextRange &range)
     : range_(range), text_(std::move(text)) {}
 
-strex::CharsetNode::CharsetNode(const Charset &charset) : charset_(&charset) {}
+strex::CharsetNode::CharsetNode(const Charset &charset, const TextRange &range)
+    : charset_(&charset), range_(range) {}
 
 strex::SequenceNode::SequenceNode(std::vector<std::unique_ptr<ASTNode>> nodes,
                                   const TextRange &range)

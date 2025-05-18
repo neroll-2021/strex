@@ -17,7 +17,7 @@ struct TextRange {
     std::size_t end;
 };
 
-TextRange union_range(const TextRange &x, const TextRange &y);
+TextRange range_union(const TextRange &x, const TextRange &y);
 
 } // namespace strex
 

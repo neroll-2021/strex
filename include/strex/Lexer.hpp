@@ -140,7 +140,6 @@ class Lexer {
     std::size_t current_position_{0};           ///< current processing position
     std::size_t token_begin_position_{0};       ///< begin position of the token being processed
     const std::vector<Token> *tokens_{nullptr}; ///< tokens that has been processed
-    int group_depth_{0};                        ///< nest depth of groups
     int group_count_{0};                        ///< the count of group that has been processed
     bool in_charset_{false};                    ///< if current token is in a charset
     bool has_preprocessed_{false};              ///< if the regular expression has been preprocessed

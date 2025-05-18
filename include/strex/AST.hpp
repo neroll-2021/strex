@@ -39,7 +39,7 @@ class TextNode : public ASTNode {
 
 class CharsetNode : public ASTNode {
  public:
-    explicit CharsetNode(const Charset &charset);
+    explicit CharsetNode(const Charset &charset, const TextRange &range);
 
     void accept(ASTVisitor *visitor) const override { return visitor->visit(this); }
 
@@ -47,6 +47,7 @@ class CharsetNode : public ASTNode {
 
  private:
     const Charset *charset_;
+    TextRange range_;
 };
 
 class SequenceNode : public ASTNode {
