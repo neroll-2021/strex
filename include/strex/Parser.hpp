@@ -21,17 +21,17 @@ class Parser {
     std::unique_ptr<ASTNode> parse();
 
  private:
-    std::unique_ptr<ASTNode> disjunction();
-
-    std::unique_ptr<ASTNode> concat();
-
     std::unique_ptr<ASTNode> alternative();
 
-    std::unique_ptr<ASTNode> term();
+    std::unique_ptr<ASTNode> sequence();
 
+    std::unique_ptr<ASTNode> term();
+    
     std::unique_ptr<ASTNode> atom();
 
     bool is_atom(TokenType type) const;
+
+    bool is_quantifier(TokenType type) const;
 
     const Token &consume(TokenType expect, std::string_view message);
 
@@ -51,6 +51,9 @@ class Parser {
     /// Checks if it has been processed to the end of tokens.
     /// @return Whether Parser reaches the end or not.
     bool is_end() const;
+
+    // TODO Maybe can be given in command line arguments.
+    constexpr static int default_max_repeat_count = 3;
 
     std::span<const Token> tokens_;
     std::size_t current_position_{0};

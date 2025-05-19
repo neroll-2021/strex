@@ -80,9 +80,6 @@ class RepeatNode : public ASTNode {
     int repeat_upper() const { return upper_; }
 
  private:
-    // TODO Maybe can be given in command line arguments.
-    constexpr static int max_repeat_count = 3;
-
     std::unique_ptr<ASTNode> node_;
     TextRange range_;
     int lower_;

@@ -23,7 +23,12 @@ strex::SequenceNode::SequenceNode(std::vector<std::unique_ptr<ASTNode>> nodes,
 
 strex::RepeatNode::RepeatNode(std::unique_ptr<ASTNode> node, int lower, int upper,
                               const TextRange &range)
-    : node_(std::move(node)), range_(range), lower_(lower), upper_(upper) {}
+    : node_(std::move(node)), range_(range), lower_(lower), upper_(upper) {
+    // minimum value of lower_ is 0
+    assert(lower_ != -1);
+    // maximum value of upper_ is indicated by `Parser`
+    assert(upper_ != -1);
+}
 
 strex::GroupNode::GroupNode(std::unique_ptr<ASTNode> node, const TextRange &range)
     : node_(std::move(node)), range_(range), index_(create_index()) {}

@@ -68,6 +68,12 @@ class Token {
     /// Checks if token type is the same with given type
     bool is(TokenType type) const { return type_ == type; }
 
+    /// Checks if the token type is one of given types.
+    template <typename... TokenType>
+    bool is_one_of(TokenType... types) const {
+        return (is(types) || ...);
+    }
+
     /// Returns the text range of token.
     const TextRange &range() const { return range_; }
 
