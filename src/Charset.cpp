@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cassert>
-#include <numeric>
 #include <set>
 #include <tuple>
 
@@ -10,16 +9,19 @@
 #define UPPER_CHARACTERS "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define LOWER_CHARACTERS "abcdefghijklmnopqrstuvwxyz"
 #define SPACE_CHARACTERS " \t\r\n"
-#define UNDER_SCROLL "_"
+#define UNDER_SCROLL     "_"
+#define WORD_CHARACTERS  DIGIT_CHARACTERS UPPER_CHARACTERS LOWER_CHARACTERS UNDER_SCROLL
 
-auto strex::Charset::get(std::string alphabet, bool is_inclusive) -> const Charset & {
-    static std::set<Charset, std::less<>> charsets;
+auto strex::Charset::get(std::string alphabet, bool is_inclusive) -> const Charset * {
+    static std::set<Charset> charsets;
     std::ranges::sort(alphabet);
+    auto [first, last] = std::ranges::unique(alphabet);
+    alphabet.erase(first, last);
     auto [iter, _] = charsets.insert({std::move(alphabet), is_inclusive});
-    return *iter;
+    return &(*iter);
 }
 
-auto strex::Charset::from_char_class(char char_class) -> const Charset & {
+auto strex::Charset::from_char_class(char char_class) -> const Charset * {
     switch (char_class) {
         case 'd':
             return digits();
@@ -40,34 +42,46 @@ auto strex::Charset::from_char_class(char char_class) -> const Charset & {
     }
 }
 
-auto strex::Charset::digits() -> const Charset & {
+auto strex::Charset::digits() -> const Charset * {
     return get(DIGIT_CHARACTERS, true);
 }
 
-auto strex::Charset::non_digit() -> const Charset & {
+auto strex::Charset::non_digit() -> const Charset * {
     return get(DIGIT_CHARACTERS, false);
 }
 
-auto strex::Charset::word() -> const Charset & {
-    return get(DIGIT_CHARACTERS UPPER_CHARACTERS LOWER_CHARACTERS UNDER_SCROLL, true);
+auto strex::Charset::word() -> const Charset * {
+    return get(WORD_CHARACTERS, true);
 }
 
-auto strex::Charset::non_word() -> const Charset & {
-    return get(DIGIT_CHARACTERS UPPER_CHARACTERS LOWER_CHARACTERS UNDER_SCROLL, false);
+auto strex::Charset::non_word() -> const Charset * {
+    return get(WORD_CHARACTERS, false);
 }
 
-auto strex::Charset::space() -> const Charset & {
+auto strex::Charset::space() -> const Charset * {
     return get(SPACE_CHARACTERS, true);
 }
 
-auto strex::Charset::non_space() -> const Charset & {
+auto strex::Charset::non_space() -> const Charset * {
     return get(SPACE_CHARACTERS, false);
 }
 
-auto strex::Charset::any() -> const Charset & {
-    std::string all_characters(127, '\0');
-    std::ranges::iota(all_characters, '\0');
+auto strex::Charset::any() -> const Charset * {
+    auto all_characters = [] {
+        std::string s;
+        s.resize_and_overwrite(128, [](char *s, std::size_t n) {
+            for (int i = 0; i < 128; i++)
+                s[i] = static_cast<char>(i);
+            return n;
+        });
+        return s;
+    }();
     return get(std::move(all_characters), true);
+}
+
+std::string strex::Charset::alphabet() const {
+    assert(std::ranges::is_sorted(alphabet_));
+    return alphabet_;
 }
 
 bool strex::Charset::operator<(const Charset &other) const {

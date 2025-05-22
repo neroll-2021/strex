@@ -1,6 +1,9 @@
+#include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <memory>
 #include <span>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -93,7 +96,7 @@ auto strex::Parser::sequence() -> std::unique_ptr<ASTNode> {
     std::vector<std::unique_ptr<ASTNode>> elements;
     TextRange start_range = peek().range();
     TextRange end_range = start_range;
-    while (peek().is_one_of(TokenType::Character, TokenType::Char_Class, TokenType::Left_Paren)) {
+    while (is_atom(peek().type())) {
         elements.push_back(term());
         end_range = previous().range();
     }
@@ -105,25 +108,8 @@ auto strex::Parser::sequence() -> std::unique_ptr<ASTNode> {
 
 auto strex::Parser::term() -> std::unique_ptr<ASTNode> {
     auto content = atom();
-    if (is_quantifier(peek().type())) {
-        if (match(TokenType::Star))
-            return std::make_unique<RepeatNode>(std::move(content), 0, default_max_repeat_count,
-                                                previous().range());
-        if (match(TokenType::Plus))
-            return std::make_unique<RepeatNode>(std::move(content), 1, default_max_repeat_count,
-                                                previous().range());
-        if (match(TokenType::Question))
-            return std::make_unique<RepeatNode>(std::move(content), 0, 1, previous().range());
-        if (match(TokenType::Repeat)) {
-            const Token &quantifier = previous();
-            int max_repeat_count = (quantifier.repeat_upper() == -1 ? default_max_repeat_count
-                                                                    : quantifier.repeat_upper());
-            return std::make_unique<RepeatNode>(std::move(content), quantifier.repeat_lower(),
-                                                max_repeat_count, quantifier.range());
-        }
-        // This code path should never be hit because all quantifier cases are handled above.
-        std::unreachable();
-    }
+    if (is_quantifier(peek().type()))
+        return quantifier(std::move(content));
     return content;
 }
 
@@ -133,27 +119,131 @@ auto strex::Parser::atom() -> std::unique_ptr<ASTNode> {
     if (match(TokenType::Character))
         return std::make_unique<TextNode>(previous().character(), range);
 
-    if (match(TokenType::Char_Class))
-        return std::make_unique<CharsetNode>(Charset::from_char_class(previous().character()),
+    if (match(TokenType::Char_Class)) {
+        if (previous().character() == '.')
+            return std::make_unique<CharsetNode>(*Charset::any(), range);
+        return std::make_unique<CharsetNode>(*Charset::from_char_class(previous().character()),
                                              range);
-
-    if (match(TokenType::Left_Paren)) {
-        // TODO record index of group
-        auto subexpression = alternative();
-
-        consume(TokenType::Right_Paren, "expect ')' to complete group");
-
-        TextRange end_range = previous().range();
-        return std::make_unique<GroupNode>(std::move(subexpression), range_union(range, end_range));
     }
+
+    if (match(TokenType::Left_Paren))
+        return group();
+
+    if (match(TokenType::Left_Bracket))
+        return charset();
 
     // zero-length character
     return std::make_unique<TextNode>("", range);
 }
 
+auto strex::Parser::quantifier(std::unique_ptr<ASTNode> content) -> std::unique_ptr<ASTNode> {
+    assert(is_quantifier(peek().type()));
+    if (match(TokenType::Star))
+        return std::make_unique<RepeatNode>(std::move(content), 0, default_max_repeat_count,
+                                            previous().range());
+    if (match(TokenType::Plus))
+        return std::make_unique<RepeatNode>(std::move(content), 1, default_max_repeat_count,
+                                            previous().range());
+    if (match(TokenType::Question))
+        return std::make_unique<RepeatNode>(std::move(content), 0, 1, previous().range());
+
+    if (match(TokenType::Repeat)) {
+        const Token &quantifier = previous();
+        int max_repeat_count = (quantifier.repeat_upper() == -1 ? default_max_repeat_count
+                                                                : quantifier.repeat_upper());
+        return std::make_unique<RepeatNode>(std::move(content), quantifier.repeat_lower(),
+                                            max_repeat_count, quantifier.range());
+    }
+
+    // This code path should never be hit because all quantifier cases are handled above.
+    std::unreachable();
+}
+
+auto strex::Parser::group() -> std::unique_ptr<ASTNode> {
+    // TODO record index of group
+    TextRange start_range = previous().range();
+    auto subexpression = alternative();
+    consume(TokenType::Right_Paren, "expect ')' to complete group");
+    TextRange end_range = previous().range();
+    return std::make_unique<GroupNode>(std::move(subexpression),
+                                       range_union(start_range, end_range));
+}
+
+/// Returns ASCII characters that are not in parameter `except`.
+static std::string exclude(std::string except);
+
+auto strex::Parser::charset() -> std::unique_ptr<ASTNode> {
+    TextRange start_range = previous().range();
+    bool is_inclusive = !match(TokenType::Caret);
+    std::string characters = charset_item_list();
+
+    if (!is_inclusive)
+        characters = exclude(characters);
+    is_inclusive = true;
+
+    const Token &end_token = consume(TokenType::Right_Bracket, "expect ']' to close character set");
+    TextRange range = range_union(start_range, end_token.range());
+    const Charset *cs = Charset::get(characters);
+    return std::make_unique<CharsetNode>(*cs, range);
+}
+
+std::string strex::Parser::charset_item_list() {
+    std::string characters;
+    while (!is_end() && !check(TokenType::Right_Bracket)) {
+        assert(peek().is_one_of(TokenType::Character, TokenType::Char_Class));
+        if (is_char_range())
+            characters.append(char_range());
+        else if (check(TokenType::Character)) {
+            characters.push_back(advance().character());
+        } else if (check(TokenType::Char_Class)) {
+            auto cs = Charset::from_char_class(advance().character());
+            if (cs->is_inclusive())
+                characters.append(cs->alphabet());
+            else
+                characters.append(exclude(cs->alphabet()));
+        }
+    }
+    return characters;
+}
+
+bool strex::Parser::is_char_range() {
+    auto position = current_position_;
+    if (!check(TokenType::Character)) {
+        current_position_ = position;
+        return false;
+    }
+    advance();
+    if (!check(TokenType::Hyphen)) {
+        current_position_ = position;
+        return false;
+    }
+    advance();
+    if (!check(TokenType::Character)) {
+        current_position_ = position;
+        return false;
+    }
+    current_position_ = position;
+    return true;
+}
+
+std::string strex::Parser::char_range() {
+    char start = advance().character();
+    advance();
+    char end = advance().character();
+    if (start > end)
+        throw ParseError("invalid character range: {}-{} ({:02x}-{:02x})", start, end, start, end);
+    std::string characters;
+    characters.resize_and_overwrite(end - start + 1, [=](char *s, std::size_t size) {
+        for (std::size_t i = 0; i < size; i++)
+            s[i] = static_cast<char>(start + i);
+        return size;
+    });
+    return characters;
+}
+
 bool strex::Parser::is_atom(TokenType type) const {
     return type == TokenType::Character || type == TokenType::Char_Class ||
-           type == TokenType::Left_Paren;
+           type == TokenType::Left_Paren || type == TokenType::Left_Bracket;
 }
 
 bool strex::Parser::is_quantifier(TokenType type) const {
@@ -175,6 +265,12 @@ bool strex::Parser::match(TokenType expect) {
     return false;
 }
 
+bool strex::Parser::check(TokenType expect) const {
+    if (is_end())
+        return false;
+    return peek().is(expect);
+}
+
 auto strex::Parser::peek() const -> const Token & {
     assert(!is_end());
     return tokens_[current_position_];
@@ -192,4 +288,25 @@ auto strex::Parser::advance() -> const Token & {
 
 bool strex::Parser::is_end() const {
     return current_position_ >= tokens_.size();
+}
+
+std::string exclude(std::string except) {
+    static const auto ascii_characters = [] {
+        std::string s;
+        s.resize_and_overwrite(128, [](char *s, std::size_t n) {
+            for (std::size_t i = 0; i < n; i++)
+                s[i] = static_cast<char>(i);
+            return n;
+        });
+        return s;
+    }();
+
+    // Parameters of `set_difference` must be sorted.
+    std::ranges::sort(except);
+    auto [last, end] = std::ranges::unique(except);
+    except.erase(last, end);
+
+    std::string result;
+    std::ranges::set_difference(ascii_characters, except, std::back_inserter(result));
+    return result;
 }
