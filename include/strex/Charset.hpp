@@ -2,6 +2,7 @@
 #define NEROLL_STREX_CHARSET_HPP
 
 #include <string>
+#include <string_view>
 
 namespace strex {
 
@@ -34,7 +35,7 @@ class Charset {
 
     bool is_inclusive() const { return is_inclusive_; }
 
-    std::string alphabet() const;
+    std::string_view alphabet() const;
 
     bool operator<(const Charset &other) const;
 

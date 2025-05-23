@@ -152,7 +152,10 @@ auto strex::Parser::quantifier(std::unique_ptr<ASTNode> content) -> std::unique_
 
     if (match(TokenType::Repeat)) {
         const Token &quantifier = previous();
-        int max_repeat_count = (quantifier.repeat_upper() == -1 ? default_max_repeat_count
+        int lower = quantifier.repeat_lower();
+        // If the upper bound is open-ended (-1), we use the lower bound plus default_max_repeat_count
+        // to provide a practical limit for repetition, preventing potential infinite loops.
+        int max_repeat_count = (quantifier.repeat_upper() == -1 ? lower + default_max_repeat_count
                                                                 : quantifier.repeat_upper());
         return std::make_unique<RepeatNode>(std::move(content), quantifier.repeat_lower(),
                                             max_repeat_count, quantifier.range());
@@ -201,11 +204,12 @@ auto strex::Parser::charset() -> std::unique_ptr<ASTNode> {
 auto strex::Parser::backreference() -> std::unique_ptr<ASTNode> {
     int group_number = previous().group_number();
     assert(group_number != 0);
-    // if backreference is before associated group, matches zero-length text
+    // if backreference is before the associated group, matches zero-length text
     if (group_number >= static_cast<int>(groups_.size())) {
         return std::make_unique<TextNode>("", previous().range());
     } else {
         const GroupNode *group = groups_[group_number];
+        assert(group != nullptr);
         return std::make_unique<BackrefNode>(group, previous().range());
     }
 }
@@ -223,7 +227,7 @@ std::string strex::Parser::charset_item_list() {
             if (cs->is_inclusive())
                 characters.append(cs->alphabet());
             else
-                characters.append(exclude(cs->alphabet()));
+                characters.append(exclude(std::string{cs->alphabet()}));
         }
     }
     return characters;

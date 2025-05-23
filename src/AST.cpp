@@ -1,4 +1,5 @@
 #include <memory>
+#include <print>
 #include <string>
 #include <vector>
 
@@ -25,9 +26,13 @@ strex::RepeatNode::RepeatNode(std::unique_ptr<ASTNode> node, int lower, int uppe
                               const TextRange &range)
     : node_(std::move(node)), range_(range), lower_(lower), upper_(upper) {
     // minimum value of lower_ is 0
-    assert(lower_ != -1);
+    assert(lower_ >= 0);
     // maximum value of upper_ is indicated by `Parser`
-    assert(upper_ != -1);
+    assert(upper_ >= 0);
+
+    if (lower_ > upper_)
+        std::println("lower: {}, upper: {}", lower_, upper_);
+    assert(lower_ <= upper_);
 }
 
 strex::GroupNode::GroupNode(std::unique_ptr<ASTNode> node, int index, const TextRange &range)

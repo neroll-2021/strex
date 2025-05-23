@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <set>
+#include <string_view>
 #include <tuple>
 
 #include <strex/Charset.hpp>
@@ -69,17 +70,23 @@ auto strex::Charset::non_space() -> const Charset * {
 auto strex::Charset::any() -> const Charset * {
     auto all_characters = [] {
         std::string s;
-        s.resize_and_overwrite(128, [](char *s, std::size_t n) {
-            for (int i = 0; i < 128; i++)
-                s[i] = static_cast<char>(i);
-            return n;
+        s.resize_and_overwrite(128, [](char *s, std::size_t) {
+            int i;
+            char ch = '\0';
+            for (i = 0; i < 127; i++, ch++) {
+                s[i] = ch;
+                // Skip newline characters as they cannot be matched by `.`.
+                if (ch == '\n')
+                    i--;
+            }
+            return i;
         });
         return s;
     }();
     return get(std::move(all_characters), true);
 }
 
-std::string strex::Charset::alphabet() const {
+std::string_view strex::Charset::alphabet() const {
     assert(std::ranges::is_sorted(alphabet_));
     return alphabet_;
 }

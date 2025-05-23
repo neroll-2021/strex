@@ -121,6 +121,9 @@ TEST_CASE("quantifier") {
 
 TEST_CASE("quantifier2") {
     check("a{1,5}", R"((repeat (text "a") [1, 5]))");
+    check("a{1,}", R"((repeat (text "a") [1, 4]))");
+    check("[a]{1,5}", R"((repeat (charset include a) [1, 5]))");
+    check("[a]{1,}", R"((repeat (charset include a) [1, 4]))");
 }
 
 TEST_CASE("invalid quantifier") {
@@ -155,7 +158,7 @@ TEST_CASE("char class \\W") {
 }
 
 TEST_CASE("char class .") {
-    check(".", "(charset include {})", ascii_characters());
+    check(".", "(charset include {})", exclude("\n"));
 }
 
 TEST_CASE("charset include plain character") {
