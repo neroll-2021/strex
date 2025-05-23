@@ -88,7 +88,7 @@ class RepeatNode : public ASTNode {
 
 class GroupNode : public ASTNode {
  public:
-    explicit GroupNode(std::unique_ptr<ASTNode> node, const TextRange &range);
+    GroupNode(std::unique_ptr<ASTNode> node, int index, const TextRange &range);
 
     void accept(ASTVisitor *visitor) const override { return visitor->visit(this); }
 
@@ -99,9 +99,6 @@ class GroupNode : public ASTNode {
     int index() const { return index_; }
 
  private:
-    /// Gets the index of the group.
-    int create_index();
-
     constexpr static int max_group_number = 255;
 
     std::unique_ptr<ASTNode> node_;
@@ -139,8 +136,8 @@ class BackrefNode : public ASTNode {
     const GroupNode *group() const { return group_; }
 
  private:
-    TextRange range_;
     const GroupNode *group_;
+    TextRange range_;
 };
 
 } // namespace strex

@@ -30,17 +30,14 @@ strex::RepeatNode::RepeatNode(std::unique_ptr<ASTNode> node, int lower, int uppe
     assert(upper_ != -1);
 }
 
-strex::GroupNode::GroupNode(std::unique_ptr<ASTNode> node, const TextRange &range)
-    : node_(std::move(node)), range_(range), index_(create_index()) {}
-
-int strex::GroupNode::create_index() {
-    static int next_int = 0;
-    int group_number = ++next_int;
-    if (group_number > max_group_number)
-        throw ParseError("group number reaches limit {}", max_group_number);
-    return group_number;
-}
+strex::GroupNode::GroupNode(std::unique_ptr<ASTNode> node, int index, const TextRange &range)
+    : node_(std::move(node)), range_(range), index_(index) {}
 
 strex::AlternationNode::AlternationNode(std::unique_ptr<ASTNode> left,
                                         std::unique_ptr<ASTNode> right, const TextRange &range)
     : range_(range), left_(std::move(left)), right_(std::move(right)) {}
+
+strex::BackrefNode::BackrefNode(const GroupNode *group, const TextRange &range)
+    : group_(group), range_(range) {
+    assert(group != nullptr);
+}

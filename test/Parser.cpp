@@ -87,7 +87,8 @@ TEST_CASE("alternation with charset") {
 }
 
 TEST_CASE("alternation with group") {
-    check("(a)|(b)|(c)", R"((alter (alter (group (text "a")) | (group (text "b"))) | (group (text "c"))))");
+    check("(a)|(b)|(c)",
+          R"((alter (alter (group (text "a")) | (group (text "b"))) | (group (text "c"))))");
 }
 
 TEST_CASE("alternation in sequence") {
@@ -216,4 +217,13 @@ TEST_CASE("charset exclude \\W") {
 
 TEST_CASE("all characters") {
     check("[\\d\\D]", "(charset include {})", ascii_characters());
+}
+
+TEST_CASE("backreference") {
+    check("(a)\\1", R"((sequence (group (text "a")), (backref 1)))");
+}
+
+TEST_CASE("backreference2") {
+    // Backreference before associated group matches zero-length character.
+    check("\\1\\2(a)", R"((sequence (text ""), (text "{}"), (group (text "a"))))", '\2');
 }

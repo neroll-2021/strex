@@ -4,6 +4,7 @@
 #include <memory>
 #include <span>
 #include <string_view>
+#include <vector>
 
 #include <strex/AST.hpp>
 #include <strex/Token.hpp>
@@ -43,6 +44,9 @@ class Parser {
     /// Returns a `CharsetNode`.
     std::unique_ptr<ASTNode> charset();
 
+    /// Returns a `BackrefNode`.
+    std::unique_ptr<ASTNode> backreference();
+
     /// Returns all characters in character set.
     std::string charset_item_list();
 
@@ -81,8 +85,13 @@ class Parser {
     // TODO Maybe can be given in command line arguments.
     constexpr static int default_max_repeat_count = 3;
 
-    std::span<const Token> tokens_;
-    std::size_t current_position_{0};
+    /// Max count of groups.
+    // TODO Maybe can be given in command line arguments.
+    constexpr static int max_group_number = 255;
+
+    std::span<const Token> tokens_;            ///< tokens to be processed
+    std::size_t current_position_{0};          ///< a
+    std::vector<GroupNode *> groups_{nullptr}; ///< groups that has been processed
 };
 
 } // namespace strex

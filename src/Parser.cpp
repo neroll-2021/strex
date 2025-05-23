@@ -132,6 +132,9 @@ auto strex::Parser::atom() -> std::unique_ptr<ASTNode> {
     if (match(TokenType::Left_Bracket))
         return charset();
 
+    if (match(TokenType::Backreference))
+        return backreference();
+
     // zero-length character
     return std::make_unique<TextNode>("", range);
 }
@@ -165,8 +168,16 @@ auto strex::Parser::group() -> std::unique_ptr<ASTNode> {
     auto subexpression = alternative();
     consume(TokenType::Right_Paren, "expect ')' to complete group");
     TextRange end_range = previous().range();
-    return std::make_unique<GroupNode>(std::move(subexpression),
-                                       range_union(start_range, end_range));
+
+    auto group =
+        std::make_unique<GroupNode>(std::move(subexpression), static_cast<int>(groups_.size()),
+                                    range_union(start_range, end_range));
+    if (group->index() > max_group_number)
+        throw ParseError("group number reaches limit {}", max_group_number);
+
+    groups_.push_back(group.get());
+
+    return group;
 }
 
 /// Returns ASCII characters that are not in parameter `except`.
@@ -185,6 +196,18 @@ auto strex::Parser::charset() -> std::unique_ptr<ASTNode> {
     TextRange range = range_union(start_range, end_token.range());
     const Charset *cs = Charset::get(characters);
     return std::make_unique<CharsetNode>(*cs, range);
+}
+
+auto strex::Parser::backreference() -> std::unique_ptr<ASTNode> {
+    int group_number = previous().group_number();
+    assert(group_number != 0);
+    // if backreference is before associated group, matches zero-length text
+    if (group_number >= static_cast<int>(groups_.size())) {
+        return std::make_unique<TextNode>("", previous().range());
+    } else {
+        const GroupNode *group = groups_[group_number];
+        return std::make_unique<BackrefNode>(group, previous().range());
+    }
 }
 
 std::string strex::Parser::charset_item_list() {
@@ -243,7 +266,8 @@ std::string strex::Parser::char_range() {
 
 bool strex::Parser::is_atom(TokenType type) const {
     return type == TokenType::Character || type == TokenType::Char_Class ||
-           type == TokenType::Left_Paren || type == TokenType::Left_Bracket;
+           type == TokenType::Left_Paren || type == TokenType::Left_Bracket ||
+           type == TokenType::Backreference;
 }
 
 bool strex::Parser::is_quantifier(TokenType type) const {
