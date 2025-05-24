@@ -45,6 +45,8 @@ class CharsetNode : public ASTNode {
 
     const Charset *charset() const { return charset_; }
 
+    const TextRange &text_range() const { return range_; }
+
  private:
     const Charset *charset_;
     TextRange range_;
