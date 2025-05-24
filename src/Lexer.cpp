@@ -441,22 +441,23 @@ auto strex::Lexer::repeat() -> Token {
 
 auto strex::Lexer::extension() -> Token {
     char ext = advance();
+    // TODO support lookahead, lookbehind and non-capture group
     switch (ext) {
         case ':':
-            return make_token(TokenType::Non_Capturing_Group);
+            throw SyntaxNotSupport("non-capture group is not supported");
         case '=':
-            return make_token(TokenType::Positive_Lookahead);
+            throw SyntaxNotSupport("positive lookahead is not supported");
         case '!':
-            return make_token(TokenType::Negative_Lookahead);
+            throw SyntaxNotSupport("negative lookahead is not supported");
         case '<':
             ext = peek();
             if (ext == '=') {
                 advance();
-                return make_token(TokenType::Positive_Lookbehind);
+                throw SyntaxNotSupport("positive lookbehind is not supported");
             }
             if (ext == '!') {
                 advance();
-                return make_token(TokenType::Negative_Lookbehind);
+                throw SyntaxNotSupport("negative lookbehind is not supported");
             }
             // Named capture group is not support yet.
             // if (is_alpha(ext))

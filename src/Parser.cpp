@@ -234,6 +234,7 @@ std::string strex::Parser::charset_item_list() {
 }
 
 bool strex::Parser::is_char_range() {
+    // TODO Use scope guard to simplify code.
     auto position = current_position_;
     if (!check(TokenType::Character)) {
         current_position_ = position;
@@ -258,7 +259,8 @@ std::string strex::Parser::char_range() {
     advance();
     char end = advance().character();
     if (start > end)
-        throw ParseError("invalid character range: {}-{} ({:02x}-{:02x})", start, end, start, end);
+        throw ParseError("invalid character range: {}-{} ({:#02x}-{:#02x})", start, end, start,
+                         end);
     std::string characters;
     characters.resize_and_overwrite(end - start + 1, [=](char *s, std::size_t size) {
         for (std::size_t i = 0; i < size; i++)
@@ -300,7 +302,7 @@ bool strex::Parser::check(TokenType expect) const {
 }
 
 auto strex::Parser::peek() const -> const Token & {
-    assert(!is_end());
+    assert(current_position_ < tokens_.size());
     return tokens_[current_position_];
 }
 
@@ -310,12 +312,16 @@ auto strex::Parser::previous() const -> const Token & {
 }
 
 auto strex::Parser::advance() -> const Token & {
-    assert(!is_end());
-    return tokens_[current_position_++];
+    if (!is_end()) {
+        current_position_++;
+        return previous();
+    }
+    return peek();
 }
 
 bool strex::Parser::is_end() const {
-    return current_position_ >= tokens_.size();
+    assert(current_position_ < tokens_.size());
+    return tokens_[current_position_].is(TokenType::End);
 }
 
 std::string exclude(std::string except) {

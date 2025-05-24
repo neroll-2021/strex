@@ -9,6 +9,8 @@
 #include <strex/Lexer.hpp>
 #include <strex/Parser.hpp>
 
+#include "helper/ASTFormatter.hpp"
+
 #include <doctest/doctest.h>
 
 using namespace strex;
@@ -22,6 +24,9 @@ void check(std::string_view regex, int test_count = default_test_count) {
     Parser parser(tokens);
     auto ast = parser.parse();
 
+    test::ASTFormatter formatter(ast.get());
+    std::string formatted_ast = formatter.format();
+
     Generator generator(ast.get());
 
     for (int i = 0; i < test_count; i++) {
@@ -30,6 +35,7 @@ void check(std::string_view regex, int test_count = default_test_count) {
         std::regex r(std::string{regex});
 
         INFO("generated string: \"", str, "\"");
+        INFO("AST: ", formatted_ast);
         CHECK(std::regex_match(str, r));
         CHECK(std::ranges::all_of(str, ::isprint));
     }
@@ -125,7 +131,13 @@ TEST_CASE("alternation") {
     check("a*|b+|c?|d|e");
 }
 
-TEST_CASE("group and backreference in alternation") {
+TEST_CASE("empty alternation") {
+    check("(a|)");
+}
+
+TEST_CASE("group and backreference in the same alternation") {
+    // In this case, Strex cannot guarantee that
+    // the generated string will always match the regular expression.
     Lexer lexer("(aa)|\\1");
     auto tokens = lexer.tokenize();
 
@@ -136,7 +148,8 @@ TEST_CASE("group and backreference in alternation") {
 
     try {
         std::string s = generator.generate();
-        CHECK(s == "aa");
+        bool result = (s == "aa" || s == "");
+        CHECK(result);
     }
     catch (GenerateError &e) {
         CHECK_EQ(e.what(),

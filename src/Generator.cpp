@@ -90,7 +90,8 @@ void strex::Generator::visit(const AlternationNode *node) {
 void strex::Generator::visit(const BackrefNode *node) {
     // for regex like `(abc)|\1`
     if (!group_generated_.contains(node->group()))
-        throw GenerateError("failed to generate string: backreference to optional group");
+        return;
+
     assert(group_generated_.contains(node->group()));
 
     generated_string_.append(group_generated_[node->group()]);
