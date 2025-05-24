@@ -207,7 +207,7 @@ TEST_CASE("backreference2") {
         {TokenType::Right_Paren, '\0'},   // )
         {TokenType::Right_Paren, '\0'},   // )
         {TokenType::Left_Paren, '\0'},    // (
-        {TokenType::Right_Paren, '\0'},  // )
+        {TokenType::Right_Paren, '\0'},   // )
         {TokenType::End, '\0'},
     };
     auto tokens = lexer.tokenize();
@@ -318,6 +318,23 @@ TEST_CASE("hyphen") {
         TokenType::Character,     // -
         TokenType::Right_Bracket, // ]
         TokenType::Character,     // -
+        TokenType::End,           // EOF
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("^, $ in charset") {
+    Lexer lexer(R"([-^$])");
+    std::vector<TokenType> expect_types = {
+        TokenType::Left_Bracket,  // [
+        TokenType::Character,     // -
+        TokenType::Character,     // ^
+        TokenType::Character,     // $
+        TokenType::Right_Bracket, // ]
         TokenType::End,           // EOF
     };
     auto tokens = lexer.tokenize();
@@ -442,13 +459,8 @@ TEST_CASE("dot") {
 TEST_CASE("non-ascii") {
     Lexer lexer(R"(你好)");
     std::vector<TokenType> expect_types = {
-        TokenType::Character,
-        TokenType::Character,
-        TokenType::Character,
-        TokenType::Character,
-        TokenType::Character,
-        TokenType::Character,
-        TokenType::End,
+        TokenType::Character, TokenType::Character, TokenType::Character, TokenType::Character,
+        TokenType::Character, TokenType::Character, TokenType::End,
     };
     auto tokens = lexer.tokenize();
     REQUIRE(tokens.size() == expect_types.size());

@@ -50,7 +50,7 @@ auto strex::Lexer::next_token() -> Token {
     token_begin_position_ = current_position_;
 
     if (is_end())
-        return Token::create(TokenType::End, make_token_range());
+        return make_token(TokenType::End);
 
     char ch = advance();
     switch (ch) {
@@ -79,9 +79,9 @@ auto strex::Lexer::next_token() -> Token {
         case '.':
             return dot();
         case '^':
-            return make_token(TokenType::Caret);
+            return caret();
         case '$':
-            return make_token(TokenType::Dollar);
+            return dollar();
         default:
             return character(ch);
     }
@@ -230,6 +230,20 @@ auto strex::Lexer::dot() -> Token {
     return make_char_class('.');
 }
 
+auto strex::Lexer::caret() -> Token {
+    if (in_charset_ && is_first_in_charset())
+        return make_token(TokenType::Caret);
+    if (in_charset_)
+        return make_character('^');
+    return make_token(TokenType::Caret);
+}
+
+auto strex::Lexer::dollar() -> Token {
+    if (in_charset_)
+        return make_character('$');
+    return make_token(TokenType::Dollar);
+}
+
 auto strex::Lexer::character(char ch) -> Token {
     if (in_charset_ && !isascii(ch))
         throw LexicalError("non-ascii character in charset is not supported");
@@ -243,7 +257,7 @@ auto strex::Lexer::word_boundary(char ch) -> Token {
         if (in_charset_)
             return make_character('\b');
     }
-    return Token::create(TokenType::Word_Boundary, make_token_range());
+    return make_token(TokenType::Word_Boundary);
 }
 
 // Checks if a character is a digit.

@@ -217,10 +217,10 @@ auto strex::Parser::backreference() -> std::unique_ptr<ASTNode> {
 std::string strex::Parser::charset_item_list() {
     std::string characters;
     while (!is_end() && !check(TokenType::Right_Bracket)) {
-        assert(peek().is_one_of(TokenType::Character, TokenType::Char_Class));
-        if (is_char_range())
+        assert(peek().is_one_of(TokenType::Character, TokenType::Char_Class, TokenType::Hyphen));
+        if (is_char_range()) {
             characters.append(char_range());
-        else if (check(TokenType::Character)) {
+        } else if (check(TokenType::Character)) {
             characters.push_back(advance().character());
         } else if (check(TokenType::Char_Class)) {
             auto cs = Charset::from_char_class(advance().character());
@@ -228,6 +228,9 @@ std::string strex::Parser::charset_item_list() {
                 characters.append(cs->alphabet());
             else
                 characters.append(exclude(std::string{cs->alphabet()}));
+        } else if (check(TokenType::Hyphen)) {
+            advance();
+            characters.push_back('-');
         }
     }
     return characters;

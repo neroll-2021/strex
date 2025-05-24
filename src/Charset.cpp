@@ -3,6 +3,7 @@
 #include <set>
 #include <string_view>
 #include <tuple>
+#include <utility>
 
 #include <strex/Charset.hpp>
 
@@ -40,6 +41,7 @@ auto strex::Charset::from_char_class(char char_class) -> const Charset * {
             return any();
         default:
             assert(false && "[Charset::from_char_class] invalid char class character");
+            std::unreachable();
     }
 }
 

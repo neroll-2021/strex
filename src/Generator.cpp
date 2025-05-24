@@ -2,7 +2,7 @@
 #include <cassert>
 #include <cctype>
 #include <cstddef>
-#include <print>
+#include <functional>
 #include <random>
 #include <string>
 #include <string_view>
@@ -20,6 +20,7 @@ std::string strex::Generator::generate() {
     generated_string_.clear();
     group_generated_.clear();
     generate(ast_);
+    assert(std::ranges::all_of(generated_string_, ::isprint));
     return generated_string_;
 }
 
@@ -118,7 +119,7 @@ std::string exclude(std::string_view except) {
 
 std::string remove_unprintable(std::string &characters) {
     assert(std::ranges::is_sorted(characters));
-    auto [last, end] = std::ranges::remove_if(characters, [](char ch) { return !::isprint(ch); });
+    auto [last, end] = std::ranges::remove_if(characters, std::not_fn(::isprint));
     characters.erase(last, end);
     return characters;
 }

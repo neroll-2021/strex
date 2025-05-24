@@ -77,6 +77,14 @@ class Lexer {
     /// Returns a token with type `Character` or `Char_Class`.
     Token dot();
 
+    /// Processes the caret character `^`.
+    /// Returns a token with type `Caret` or `Character`.
+    Token caret();
+
+    /// Processes the dollar character `$`.
+    /// Returns a token with type `Dollar` or `Character`.
+    Token dollar();
+
     /// Processes the character.
     /// Checks if the character is valid, returns a token with type `Character`.
     Token character(char ch);
