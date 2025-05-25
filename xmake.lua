@@ -2,9 +2,8 @@ set_allowedplats("windows", "linux")
 set_allowedmodes("debug", "release")
 
 add_rules("mode.debug", "mode.release")
-set_defaultmode("debug")
 
-option("dev", { default = true })
+option("dev", { default = false })
 option("enable_tests", { default = true })
 
 if has_config("dev") then
