@@ -71,30 +71,30 @@ std::string exclude(std::string except) {
 }
 
 TEST_CASE("alternative") {
-    check("a|b|c", R"((alter (alter (text "a") | (text "b")) | (text "c")))");
+    check("a|b|c", R"((alter (text "a") | (text "b") | (text "c")))");
 }
 
 TEST_CASE("alternation with char class") {
     check(R"(\d|\s|\w)",
-          "(alter (alter (charset include {}) | (charset include {})) | (charset include {}))",
+          "(alter (charset include {}) | (charset include {}) | (charset include {}))",
           characters(DIGIT_CHARACTERS), characters(SPACE_CHARACTERS), characters(WORD_CHARACTERS));
 }
 
 TEST_CASE("alternation with charset") {
     check("[ab]|[cd]|[^ef]",
-          "(alter (alter (charset include ab) | (charset include cd)) | (charset include {}))",
+          "(alter (charset include ab) | (charset include cd) | (charset include {}))",
           exclude("ef"));
 }
 
 TEST_CASE("alternation with group") {
-    check("(a)|(b)|(c)",
-          R"((alter (alter (group (text "a")) | (group (text "b"))) | (group (text "c"))))");
+    check("(a)|(b)|(c)", R"((alter (group (text "a")) | (group (text "b")) | (group (text "c"))))");
 }
 
 TEST_CASE("alternation in sequence") {
-    check(
-        "ab|cd|ef",
-        R"((alter (alter (sequence (text "a"), (text "b")) | (sequence (text "c"), (text "d"))) | (sequence (text "e"), (text "f"))))");
+    check("ab|cd|ef", R"((alter (sequence (text "a"), (text "b")) | )"
+                      R"((sequence (text "c"), (text "d")) | )"
+                      R"((sequence (text "e"), (text "f")))"
+                      ")");
 }
 
 TEST_CASE("group with text") {

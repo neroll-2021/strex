@@ -80,12 +80,16 @@ void strex::Generator::visit(const GroupNode *node) {
 }
 
 void strex::Generator::visit(const AlternationNode *node) {
-    static std::uniform_int_distribution<int> random(0, 1);
+    const auto &elements = node->elements();
+    if (elements.empty())
+        return;
+    if (elements.size() == 1) {
+        generate(elements[0].get());
+        return;
+    }
+    std::uniform_int_distribution<std::size_t> random(0, elements.size() - 1);
 
-    if (random(engine_) == 0)
-        generate(node->left());
-    else
-        generate(node->right());
+    generate(elements[random(engine_)].get());
 }
 
 void strex::Generator::visit(const BackrefNode *node) {

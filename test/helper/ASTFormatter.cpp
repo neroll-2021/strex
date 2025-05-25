@@ -1,6 +1,6 @@
-#include <string>
-#include <ranges>
 #include <format>
+#include <ranges>
+#include <string>
 
 #include "ASTFormatter.hpp"
 #include <strex/AST.hpp>
@@ -23,8 +23,8 @@ void strex::test::ASTFormatter::visit(const TextNode *node) {
 
 void strex::test::ASTFormatter::visit(const CharsetNode *node) {
     auto charset = node->charset();
-    formatted_.append(std::format("(charset {} {})", charset->is_inclusive() ? "include" : "exclude",
-               charset->alphabet()));
+    formatted_.append(std::format(
+        "(charset {} {})", charset->is_inclusive() ? "include" : "exclude", charset->alphabet()));
 }
 
 void strex::test::ASTFormatter::visit(const SequenceNode *node) {
@@ -47,15 +47,17 @@ void strex::test::ASTFormatter::visit(const RepeatNode *node) {
 void strex::test::ASTFormatter::visit(const GroupNode *node) {
     formatted_.append("(group ");
     format(node->content());
-    formatted_.append(")");
+    formatted_.push_back(')');
 }
 
 void strex::test::ASTFormatter::visit(const AlternationNode *node) {
     formatted_.append("(alter ");
-    format(node->left());
-    formatted_.append(" | ");
-    format(node->right());
-    formatted_.append(")");
+    for (const auto &[index, element] : node->elements() | std::views::enumerate) {
+        if (index != 0)
+            formatted_.append(" | ");
+        format(element.get());
+    }
+    formatted_.push_back(')');
 }
 
 void strex::test::ASTFormatter::visit(const BackrefNode *node) {

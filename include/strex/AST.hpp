@@ -110,21 +110,17 @@ class GroupNode : public ASTNode {
 
 class AlternationNode : public ASTNode {
  public:
-    AlternationNode(std::unique_ptr<ASTNode> left, std::unique_ptr<ASTNode> right,
-                    const TextRange &range);
+    AlternationNode(std::vector<std::unique_ptr<ASTNode>> elements, const TextRange &range);
 
     void accept(ASTVisitor *visitor) const override { return visitor->visit(this); }
 
     const TextRange &text_range() const { return range_; }
 
-    const ASTNode *left() const { return left_.get(); }
-
-    const ASTNode *right() const { return right_.get(); }
+    const std::vector<std::unique_ptr<ASTNode>> &elements() const { return elements_; }
 
  private:
+    std::vector<std::unique_ptr<ASTNode>> elements_;
     TextRange range_;
-    std::unique_ptr<ASTNode> left_;
-    std::unique_ptr<ASTNode> right_;
 };
 
 class BackrefNode : public ASTNode {

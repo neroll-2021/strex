@@ -84,10 +84,14 @@ auto strex::Parser::parse() -> std::unique_ptr<ASTNode> {
 auto strex::Parser::alternative() -> std::unique_ptr<ASTNode> {
     TextRange range = peek().range();
     auto alter = sequence();
-    while (match(TokenType::Alternation)) {
-        range = range_union(range, peek().range());
-        auto rhs = sequence();
-        alter = std::make_unique<AlternationNode>(std::move(alter), std::move(rhs), range);
+    if (check(TokenType::Alternation)) {
+        std::vector<std::unique_ptr<ASTNode>> elements;
+        elements.emplace_back(std::move(alter));
+        while (match(TokenType::Alternation)) {
+            range = range_union(range, previous().range());
+            elements.emplace_back(sequence());
+        }
+        return std::make_unique<AlternationNode>(std::move(elements), range);
     }
     return alter;
 }

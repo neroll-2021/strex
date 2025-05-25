@@ -34,7 +34,7 @@ class Generator : public ASTVisitor {
 
     const ASTNode *ast_;
     std::string generated_string_;
-    std::default_random_engine engine_{std::random_device{}()};
+    std::mt19937 engine_{std::random_device{}()};
     std::unordered_map<const GroupNode *, std::string> group_generated_;
 };
 
