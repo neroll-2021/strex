@@ -5,6 +5,7 @@ add_rules("mode.debug", "mode.release")
 set_defaultmode("debug")
 
 option("dev", { default = true })
+option("enable_tests", { default = true })
 
 if has_config("dev") then
     if is_mode("debug") and is_plat("linux") then
@@ -17,7 +18,18 @@ end
 set_languages("c++23")
 set_warnings("allextra", "error")
 
-add_requires("doctest 2.4.11", "argparse 3.2")
+if has_config("enable_tests") then
+    add_requires("doctest 2.4.11")
+end
+add_requires("argparse 3.2")
+
+-- gcc requires to link against stdc++exp to use std::println on Windows
+option("link-stdc++exp")
+    add_links("stdc++exp")
+option_end()
+if is_plat("windows") then
+    add_options("link-stdc++exp")
+end
 
 target("strex")
     set_kind("binary")
@@ -25,15 +37,17 @@ target("strex")
     add_includedirs("include")
     add_packages("argparse")
 
-target("test")
-    set_kind("binary")
-    set_default(false)
-    add_files("src/*.cpp|main.cpp|compile_option.cpp")
-    add_includedirs("include")
-    for _, file in ipairs(os.files("test/*.cpp")) do
-        add_tests(path.basename(file), {
-            files = { file, "test/helper/*.cpp" },
-            packages = "doctest",
-            defines = "DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN"
-        })
-    end
+if has_config("enable_tests") then
+    target("test")
+        set_kind("binary")
+        set_default(false)
+        add_files("src/*.cpp|main.cpp|compile_option.cpp")
+        add_includedirs("include")
+        for _, file in ipairs(os.files("test/*.cpp")) do
+            add_tests(path.basename(file), {
+                files = { file, "test/helper/*.cpp" },
+                packages = "doctest",
+                defines = "DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN"
+            })
+        end
+end

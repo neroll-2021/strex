@@ -25,7 +25,7 @@ TEST_CASE("token range") {
 
 TEST_CASE("backslash token type") {
     Lexer lexer(R"(\d\D\s\S\w\W\b\B\f\n\r\t\v\\\'\")");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Char_Class,    // \d
         TokenType::Char_Class,    // \D
         TokenType::Char_Class,    // \s
@@ -64,7 +64,7 @@ TEST_CASE("backslash token character") {
 
 TEST_CASE("escape character in charset") {
     Lexer lexer(R"([ \ \t\n])");
-    std::vector<std::pair<TokenType, char>> expect_types = {
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Left_Bracket, '['},  // [
         {TokenType::Character, ' '},     // ' '
         {TokenType::Character, ' '},     // \' '
@@ -85,7 +85,7 @@ TEST_CASE("escape character in charset") {
 
 TEST_CASE("invalid escape character") {
     Lexer lexer(R"(\d\n\m\y)");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Char_Class, // \d
         TokenType::Character,  // \n
         TokenType::Character,  // \m
@@ -101,7 +101,7 @@ TEST_CASE("invalid escape character") {
 
 TEST_CASE("charset") {
     Lexer lexer(R"(\d[\d\\[])");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Char_Class,    // \d
         TokenType::Left_Bracket,  // [
         TokenType::Char_Class,    // \d
@@ -119,7 +119,7 @@ TEST_CASE("charset") {
 
 TEST_CASE("charset with ']' at the beginning") {
     Lexer lexer(R"(\d[]\d\\[]\d)");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Char_Class,    // \d
         TokenType::Left_Bracket,  // [
         TokenType::Right_Bracket, // ]
@@ -139,7 +139,7 @@ TEST_CASE("charset with ']' at the beginning") {
 
 TEST_CASE("parentheses in charset") {
     Lexer lexer(R"([()]())");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Left_Bracket,  // [
         TokenType::Character,     // (
         TokenType::Character,     // )
@@ -157,7 +157,7 @@ TEST_CASE("parentheses in charset") {
 
 TEST_CASE("backreference") {
     Lexer lexer(R"(\1\2()\0\1\2\7\8\9\10\17\18\19\20\100\200\300\377\400\000)");
-    std::vector<std::pair<TokenType, char>> expect_types = {
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Backreference, '\1'}, // \1
         {TokenType::Character, '\2'},     // \2
         {TokenType::Left_Paren, '\0'},    // (
@@ -196,7 +196,7 @@ TEST_CASE("backreference") {
 
 TEST_CASE("backreference2") {
     Lexer lexer(R"(\0\1\2\3\4(())())");
-    std::vector<std::pair<TokenType, char>> expect_types = {
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Character, '\0'},     // \0
         {TokenType::Backreference, '\0'}, // \1
         {TokenType::Backreference, '\0'}, // \2
@@ -222,7 +222,7 @@ TEST_CASE("backreference2") {
 
 TEST_CASE("repeat") {
     Lexer lexer(R"(a{100,200}b{1,}c{,10}d{5}e{1, 2}f{,}g{})");
-    std::vector<std::pair<TokenType, std::pair<int, int>>> expect_types = {
+    std::vector<std::pair<strex::TokenType, std::pair<int, int>>> expect_types = {
         {TokenType::Character, {}},      // a
         {TokenType::Repeat, {100, 200}}, // {100,200}
         {TokenType::Character, {}},      // b
@@ -267,7 +267,7 @@ TEST_CASE("invalid repeat range") {
 
 TEST_CASE("brace in charset") {
     Lexer lexer(R"([{}])");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Left_Bracket,  // [
         TokenType::Character,     // {
         TokenType::Character,     // }
@@ -283,7 +283,7 @@ TEST_CASE("brace in charset") {
 
 TEST_CASE("characters") {
     Lexer lexer(R"(*^|$+]})");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Star,        // *
         TokenType::Caret,       // ^
         TokenType::Alternation, // |
@@ -308,7 +308,7 @@ TEST_CASE("trailing backslash") {
 
 TEST_CASE("hyphen") {
     Lexer lexer(R"(-[-a-z-]-)");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Character,     // -
         TokenType::Left_Bracket,  // [
         TokenType::Character,     // -
@@ -329,7 +329,7 @@ TEST_CASE("hyphen") {
 
 TEST_CASE("^, $ in charset") {
     Lexer lexer(R"([-^$])");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Left_Bracket,  // [
         TokenType::Character,     // -
         TokenType::Character,     // ^
@@ -346,7 +346,7 @@ TEST_CASE("^, $ in charset") {
 
 TEST_CASE("lazy") {
     Lexer lexer(R"(+???*?)");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Plus,     // +?
         TokenType::Question, // ??
         TokenType::Star,     // *?
@@ -362,7 +362,7 @@ TEST_CASE("lazy") {
 // TODO
 // TEST_CASE("extension") {
 //     Lexer lexer(R"((?=)(?!)(?<=)(?<!)(?:))");
-//     std::vector<TokenType> expect_types = {
+//     std::vector<strex::TokenType> expect_types = {
 //         TokenType::Left_Paren,          // (
 //         TokenType::Positive_Lookahead,  // ?=
 //         TokenType::Right_Paren,         // )
@@ -394,7 +394,7 @@ TEST_CASE("invalid extension") {
 
 TEST_CASE("hex number2") {
     Lexer lexer(R"(\x00\xff\x1f\x1g\xg1)");
-    std::vector<std::pair<TokenType, char>> expect_types = {
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Character, '\0'},   // \x00
         {TokenType::Character, '\xff'}, // \xff
         {TokenType::Character, '\x1f'}, // \x1f
@@ -417,7 +417,7 @@ TEST_CASE("hex number2") {
 
 TEST_CASE("hex number4") {
     Lexer lexer(R"(\u0000\u00ff)");
-    std::vector<std::pair<TokenType, char>> expect_types = {
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Character, '\0'},   // \u0000
         {TokenType::Character, '\xff'}, // \u00ff
         {TokenType::End, '\0'},         // EOF
@@ -438,7 +438,7 @@ TEST_CASE("unsupported hex value") {
 
 TEST_CASE("dot") {
     Lexer lexer(R"(\.[\..].)");
-    std::vector<std::pair<TokenType, char>> expect_types = {
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Character, '.'},     // \.
         {TokenType::Left_Bracket, '['},  // [
         {TokenType::Character, '.'},     // \.
@@ -458,7 +458,7 @@ TEST_CASE("dot") {
 
 TEST_CASE("non-ascii") {
     Lexer lexer(R"(你好)");
-    std::vector<TokenType> expect_types = {
+    std::vector<strex::TokenType> expect_types = {
         TokenType::Character, TokenType::Character, TokenType::Character, TokenType::Character,
         TokenType::Character, TokenType::Character, TokenType::End,
     };

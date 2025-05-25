@@ -8,7 +8,6 @@
 #include <strex/Exception.hpp>
 #include <strex/TextRange.hpp>
 #include <strex/Token.hpp>
-#include <strex/Utils.hpp>
 
 strex::TextNode::TextNode(char text, const TextRange &range) : range_(range), text_(1, text) {}
 

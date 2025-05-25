@@ -1,5 +1,4 @@
 #include <cassert>
-#include <cctype>
 #include <charconv>
 #include <string>
 #include <string_view>
@@ -362,7 +361,7 @@ auto strex::Lexer::number_after_backslash(char ch) -> Token {
 }
 
 // Checks if a character is a valid hex character.
-static bool is_hex(char ch);
+static constexpr bool is_hex(char ch);
 
 constexpr int hex_value(char ch);
 
@@ -561,7 +560,7 @@ int to_repeat_count(std::string_view str) {
     return result;
 }
 
-bool is_hex(char ch) {
+constexpr bool is_hex(char ch) {
     return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
 }
 
