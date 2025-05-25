@@ -47,6 +47,11 @@ void strex::Generator::visit(const CharsetNode *node) {
     if (characters.empty())
         return;
 
+    if (characters.size() == 1) {
+        generated_string_.push_back(characters[0]);
+        return;
+    }
+
     std::uniform_int_distribution<std::size_t> random(0, characters.size() - 1);
 
     generated_string_.push_back(characters[random(engine_)]);
