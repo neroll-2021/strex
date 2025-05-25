@@ -37,6 +37,20 @@ target("strex")
     add_includedirs("include")
     add_packages("argparse")
 
+target("static")
+    set_kind("static")
+    add_files("src/*.cpp|main.cpp|compile_option.cpp")
+    add_includedirs("include")
+    add_headerfiles("include/(strex/*.hpp)")
+    set_basename("strex")
+
+target("shared")
+    set_kind("shared")
+    add_files("src/*.cpp|main.cpp|compile_option.cpp")
+    add_includedirs("include")
+    add_headerfiles("include/(strex/*.hpp)")
+    set_basename("strex")
+
 if has_config("enable_tests") then
     target("test")
         set_kind("binary")
