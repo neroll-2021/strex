@@ -19,6 +19,16 @@ Enter `xmake run strex - r "<regex>"` to generate a random string based on a reg
 
 To generate more than one string, you can use '-n' to specify the number of strings you want to generate. For example, enter `xmake run strex -r "<regex> -n 10"` to generate 10 strings that match the regular expression.
 
+## Install
+### XMake
+#### Linux
+After building the project, enter `xmake install` to install Strex. By default, the installation directory is `/usr/local`. You can use `-o` to specify the installation location, for example, `xmake install -o path/to/an/empty/directory`. If you have a permission error, add `--admin` option and try again.
+
+By the way, `/usr/local/lib` is not in the default search path in most Linux distributions. If you want to use Strex as a library in your program, you may need to manually specify the link options, or you can add `/usr/local/lib` to the default search path.
+
+### Windows
+After building the project, enter `xmake install -o "path\to\an\empty\directory"` to install Strex to the specified directory. If you have a permission error, add `--admin` option and try again.
+
 ## Examples
 Generate IPv4 address.
 
