@@ -171,10 +171,15 @@ auto strex::Lexer::right_paren() -> Token {
 auto strex::Lexer::left_brace() -> Token {
     if (in_charset_)
         return make_character('{');
-    Token token = repeat();
-    if (!token.is(TokenType::Character) && !is_end() && peek() == '?')
-        advance();
-    return token;
+
+    if (is_repeat()) {
+        Token token = repeat();
+        if (!token.is(TokenType::Character) && !is_end() && peek() == '?')
+            advance();
+        return token;
+    } else {
+        return make_character('{');
+    }
 }
 
 auto strex::Lexer::asterisk() -> Token {
@@ -484,6 +489,46 @@ auto strex::Lexer::extension() -> Token {
 auto strex::Lexer::named_capture_group() -> Token {
     // TODO
     return make_token(TokenType::Error);
+}
+
+bool strex::Lexer::is_repeat() {
+    // TODO Use scope guard to simplify code.
+    auto position = current_position_;
+    while (!is_end() && is_digit(peek())) {
+        advance();
+    }
+    if (is_end()) {
+        current_position_ = position;
+        return false;
+    }
+
+    if (peek() == '}') {
+        current_position_ = position;
+        return true;
+    }
+
+    if (peek() != ',') {
+        current_position_ = position;
+        return false;
+    }
+
+    advance();
+
+    if (is_end()) {
+        current_position_ = position;
+        return false;
+    }
+
+    while (!is_end() && is_digit(peek())) {
+        advance();
+    }
+    if (is_end() || peek() != '}') {
+        current_position_ = position;
+        return false;
+    }
+
+    current_position_ = position;
+    return true;
 }
 
 bool strex::Lexer::is_first_in_charset() const {

@@ -258,6 +258,30 @@ TEST_CASE("repeat") {
     }
 }
 
+TEST_CASE("single left brace") {
+    Lexer lexer("{");
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == 2);
+    CHECK(tokens[0].is(TokenType::Character));
+}
+
+TEST_CASE("not repetition") {
+    Lexer lexer("{1,k}");
+    auto tokens = lexer.tokenize();
+    std::vector<strex::TokenType> expect_types = {
+        TokenType::Character, // {
+        TokenType::Character, // 1
+        TokenType::Character, // ,
+        TokenType::Character, // k
+        TokenType::Character, // }
+        TokenType::End,
+    };
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
 TEST_CASE("invalid repeat range") {
     Lexer lexer(R"(a{2,1})");
     CHECK_THROWS_AS_MESSAGE(

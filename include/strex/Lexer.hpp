@@ -110,6 +110,9 @@ class Lexer {
     /// Returns a token with type `Named_Capture_Group`.
     Token named_capture_group();
 
+    /// Returns if there is a repetition to process.
+    bool is_repeat();
+
     /// Checks if current token is the first element in charset.
     bool is_first_in_charset() const;
 
