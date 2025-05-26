@@ -20,7 +20,6 @@ std::string strex::Generator::generate() {
     generated_string_.clear();
     group_generated_.clear();
     generate(ast_);
-    assert(std::ranges::all_of(generated_string_, ::isprint));
     return generated_string_;
 }
 
