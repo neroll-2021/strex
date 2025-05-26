@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0.2)
+cmake_minimum_required(VERSION 4.0.0)
 
 project(strex DESCRIPTION "Generate strings that match the given regular expression."
               LANGUAGES CXX)
@@ -37,12 +37,12 @@ set(LIBRARY_SOURCE_FILES src/AST.cpp
 # static library
 add_library(static_library STATIC ${LIBRARY_SOURCE_FILES})
 target_include_directories(static_library PUBLIC include PUBLIC "${argparse_SOURCE_DIR}/include")
-set_target_properties(static_library PROPERTIES OUTPUT_NAME strex)
+set_target_properties(static_library PROPERTIES OUTPUT_NAME strex_static)
 
 # shared library
 add_library(shared_library SHARED ${LIBRARY_SOURCE_FILES})
 target_include_directories(shared_library PUBLIC include PUBLIC "${argparse_SOURCE_DIR}/include")
-set_target_properties(shared_library PROPERTIES OUTPUT_NAME strex)
+set_target_properties(shared_library PROPERTIES OUTPUT_NAME strex_shared)
 
 # executable
 add_executable(strex src/main.cpp src/compile_option.cpp)
