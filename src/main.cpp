@@ -1,8 +1,9 @@
 #include <exception>
-#include <string>
-#include <print>
 #include <iostream>
+#include <print>
+#include <string>
 
+#include <strex/Exception.hpp>
 #include <strex/compile_option.hpp>
 #include <strex/strex.hpp>
 
@@ -12,14 +13,21 @@ int main(int argc, char *argv[]) {
     if (argc == 1) {
         std::string regex_string;
         while (std::getline(std::cin, regex_string)) {
-            strex::compiled_regex regex(regex_string);
-            std::println("{}", strex::from_regex(regex));
+            try {
+                strex::compiled_regex regex(regex_string);
+                std::println("{}", strex::from_regex(regex));
+            }
+            catch (std::exception &e) {
+                std::println("{}", e.what());
+            }
         }
+
+        return 0;
     }
 
     argparse::ArgumentParser program("strex", "strex 0.1.0");
 
-    program.add_description("Generate strings that match the given  regular expression.");
+    program.add_description("Generate strings that match the given regular expression.");
 
     program.add_argument("-r", "--regex")
         .help("regular expression that used to generate string")
@@ -43,9 +51,16 @@ int main(int argc, char *argv[]) {
             std::println("{}", strex::from_regex(regex));
         }
     }
+    catch (strex::LexicalError &e) {
+        std::println("{}", e.what());
+        return 1;
+    }
+    catch (strex::ParseError &e) {
+        std::println("{}", e.what());
+        return 1;
+    }
     catch (std::exception &e) {
         std::println("{}", e.what());
-        std::print("{}", program.help().str());
         return 1;
     }
 }
