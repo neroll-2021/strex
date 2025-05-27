@@ -7,7 +7,7 @@ This project is inspired by [daidodo/regxstring](https://github.com/daidodo/regx
 ### XMake
 This project uses [XMake](https://xmake.io/) as the build system. XMake is not only a simple and easy-to-use build system, but also a powerful package manager. Strex dependents on [argparse](https://github.com/p-ranav/argparse) and [doctest](https://github.com/p-ranav/argparse), using XMake makes it easy to manage dependencies.
 
-To build Srex, first enter the root directory of project, and then execute `xmake`in terminal. If you have not previously installed argparse and doctest using xmake, xmake will prompt you to install these dependencies. In this case, simply enter `y` to continue.
+To build Strex, first enter the root directory of project, and then execute `xmake`in terminal. If you have not previously installed argparse and doctest using xmake, xmake will prompt you to install these dependencies. In this case, simply enter `y` to continue.
 
 Wait for a while, the project will be built.
 
