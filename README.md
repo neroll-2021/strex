@@ -63,7 +63,7 @@ int main() {
 }
 ```
 
-`std::string strex::from_regex(std::string_view regex)` will parse the regular expression **every time** it is called. If you want to generate multiple strings based on the same regular expression, you should use `strex::compiled_regex` to reduce unnecessary parsing.
+`std::string strex::from_regex(std::string_view regex)` will parse the regular expression **every time** it is called. If you want to generate multiple strings based on the same regular expression, you should use `strex::ParsedRegex` to reduce unnecessary parsing.
 
 ```c++
 #include <print>
@@ -71,8 +71,8 @@ int main() {
 
 int main() {
     const char *regex = R"(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.){3}((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)))";
-    strex::compiled_regex cr(regex);
+    strex::ParsedRegex parsed(regex);
     for (int i = 0; i < 10; i++)
-        std::println("{}", strex::from_regex(cr));
+        std::println("{}", strex::from_regex(parsed));
 }
 ```

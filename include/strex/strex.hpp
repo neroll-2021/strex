@@ -11,18 +11,18 @@ class ASTNode;
 
 /// Compiled regular expression.
 /// This is used to avoid multiple parsing of the same regular expression.
-class compiled_regex { // NOLINT
-    friend std::string from_regex(const compiled_regex &regex);
+class ParsedRegex { // NOLINT
+    friend std::string from_regex(const ParsedRegex &regex);
 
  public:
-    explicit compiled_regex(std::string_view regex);
-    ~compiled_regex();
+    explicit ParsedRegex(std::string_view regex);
+    ~ParsedRegex();
 
-    compiled_regex(const compiled_regex &other) = delete;
-    compiled_regex &operator=(const compiled_regex &other) = delete;
+    ParsedRegex(const ParsedRegex &other) = delete;
+    ParsedRegex &operator=(const ParsedRegex &other) = delete;
 
-    compiled_regex(compiled_regex &&other) = default;
-    compiled_regex &operator=(compiled_regex &&other) = default;
+    ParsedRegex(ParsedRegex &&other) = default;
+    ParsedRegex &operator=(ParsedRegex &&other) = default;
 
  private:
     const ASTNode *ast() const;
@@ -32,7 +32,7 @@ class compiled_regex { // NOLINT
 
 std::string from_regex(std::string_view regex);
 
-std::string from_regex(const compiled_regex &regex);
+std::string from_regex(const ParsedRegex &regex);
 
 } // namespace strex
 

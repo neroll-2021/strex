@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
         std::string regex_string;
         while (std::getline(std::cin, regex_string)) {
             try {
-                strex::compiled_regex regex(regex_string);
+                strex::ParsedRegex regex(regex_string);
                 std::println("{}", strex::from_regex(regex));
             }
             catch (std::exception &e) {
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     try {
         program.parse_args(argc, argv);
 
-        strex::compiled_regex regex(strex::compile_option::base_regex);
+        strex::ParsedRegex regex(strex::compile_option::base_regex);
         while (strex::compile_option::generate_count--) {
             std::println("{}", strex::from_regex(regex));
         }

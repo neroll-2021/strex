@@ -9,19 +9,19 @@
 #include <strex/Parser.hpp>
 #include <strex/strex.hpp>
 
-strex::compiled_regex::compiled_regex(std::string_view regex) {
+strex::ParsedRegex::ParsedRegex(std::string_view regex) {
     Lexer lexer(std::string{regex});
     auto tokens = lexer.tokenize();
     Parser parser(tokens);
     ast_ = parser.parse();
 }
 
-auto strex::compiled_regex::ast() const -> const ASTNode * {
+auto strex::ParsedRegex::ast() const -> const ASTNode * {
     assert(ast_ != nullptr);
     return ast_.get();
 }
 
-strex::compiled_regex::~compiled_regex() {}
+strex::ParsedRegex::~ParsedRegex() {}
 
 std::string strex::from_regex(std::string_view regex) {
     Lexer lexer(std::string{regex});
@@ -32,7 +32,7 @@ std::string strex::from_regex(std::string_view regex) {
     return generator.generate();
 }
 
-std::string strex::from_regex(const compiled_regex &regex) {
+std::string strex::from_regex(const ParsedRegex &regex) {
     Generator generator(regex.ast());
     return generator.generate();
 }
