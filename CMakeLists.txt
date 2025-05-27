@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 4.0.0)
 
-project(strex DESCRIPTION "Generate strings that match the given regular expression."
+project(strex VERSION 0.1.0
+              DESCRIPTION "A random string generator that generates strings from regular expression."
               LANGUAGES CXX)
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)

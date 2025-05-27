@@ -1,3 +1,8 @@
+set_xmakever('2.9.8')
+
+set_project("strex")
+set_version("0.1.0", { build = "%Y%m%d%H%M" })
+
 set_allowedplats("windows", "linux")
 set_allowedmodes("debug", "release")
 
