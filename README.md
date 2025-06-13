@@ -1,4 +1,6 @@
 # Strex
+[简体中文](README_zh.md)
+
 A random string generator that generates strings from regular expression.
 
 This project is inspired by [daidodo/regxstring](https://github.com/daidodo/regxstring) and [elarsonSU/egret](https://github.com/elarsonSU/egret).
@@ -26,7 +28,7 @@ If CMake choose *Makefile* as generator, then enter `make` in terminal to build 
 ### XMake
 After building the project, run it using `xmake run strex`. You can pass command-line arguments to the program, for example, you can enter `xmake run strex --help` to display help information. Anything after `xmake run strex` will be treated as command-line arguments.
 
-Enter `xmake run strex - r "<regex>"` to generate a random string based on a regular expression. Note that if your regular expression contains double quotes, you may need to add a backslash before them to escape them.
+Enter `xmake run strex -r "<regex>"` to generate a random string based on a regular expression. Note that if your regular expression contains double quotes, you may need to add a backslash before them to escape them.
 
 To generate more than one string, you can use '-n' to specify the number of strings you want to generate. For example, enter `xmake run strex -r "<regex> -n 10"` to generate 10 strings that match the regular expression.
 
