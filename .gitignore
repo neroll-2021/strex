@@ -1,9 +1,15 @@
-# Xmake cache
 .xmake/
-build/
+.cache/
+.clice/
 
-# MacOS Cache
+build*/
+out*/
+cmake-out*/
+
+CMakeUserPresets.json
+
 .DS_Store
 
 .vscode/
 .vs/
+.idea/
