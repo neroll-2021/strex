@@ -21,8 +21,8 @@ class ParsedRegex { // NOLINT
     ParsedRegex(const ParsedRegex &other) = delete;
     ParsedRegex &operator=(const ParsedRegex &other) = delete;
 
-    ParsedRegex(ParsedRegex &&other) = default;
-    ParsedRegex &operator=(ParsedRegex &&other) = default;
+    ParsedRegex(ParsedRegex &&other) noexcept;
+    ParsedRegex &operator=(ParsedRegex &&other) noexcept;
 
  private:
     const ASTNode *ast() const;

@@ -1,4 +1,3 @@
-#include <print>
 #include <string>
 #include <string_view>
 
@@ -21,7 +20,11 @@ auto strex::ParsedRegex::ast() const -> const ASTNode * {
     return ast_.get();
 }
 
-strex::ParsedRegex::~ParsedRegex() {}
+strex::ParsedRegex::~ParsedRegex() = default;
+
+strex::ParsedRegex::ParsedRegex(ParsedRegex &&other) noexcept = default;
+
+auto strex::ParsedRegex::operator=(ParsedRegex &&other) noexcept -> ParsedRegex & = default;
 
 std::string strex::from_regex(std::string_view regex) {
     Lexer lexer(std::string{regex});
