@@ -7,7 +7,7 @@
 
 ## 构建
 ### XMake
-本项目使用 [XMake](https://xmake.io/) 作为构建系统。XMake 不仅是一个简单易用的构建系统，同时也是强大的包管理器。Strex 依赖 [argparse](https://github.com/p-ranav/argparse) 和 [doctest](https://github.com/p-ranav/argparse)，使用 XMake 可以使依赖管理更方便。
+本项目使用 [XMake](https://xmake.io/) 作为构建系统。XMake 不仅是一个简单易用的构建系统，同时也是强大的包管理器。Strex 依赖 [argparse](https://github.com/p-ranav/argparse) 和 [doctest](https://github.com/doctest/doctest)，使用 XMake 可以使依赖管理更方便。
 
 要构建 Strex，首先进入项目根目录，在命令行中输入 `xmake`。如果你此前没有使用 xmake 安装 argparse 和 doctest，xmake 将提示你安装这些依赖，在这种情况下，输入 `y` 安装依赖。
 
