@@ -96,6 +96,8 @@ class Lexer {
 
     /// Processes the number after backslash.
     /// Returns a token with type `Character` or `Backreference`.
+    /// In a charset, the number is treated as an octal or identity escape
+    /// instead of a backreference.
     Token number_after_backslash(char ch);
 
     /// Processes the hex number after `\x` or `\u`.

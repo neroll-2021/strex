@@ -310,7 +310,8 @@ auto strex::Lexer::number_after_backslash(char ch) -> Token {
     if (is_end() || !is_digit(peek())) {
         if (first_digit == '0')
             return make_character('\0');
-        if (first_digit - '0' > group_count_) {
+        // backreferences are not allowed in charsets, treat \N as octal or identity escape
+        if (in_charset_ || first_digit - '0' > group_count_) {
             if (is_octal(first_digit))
                 return make_character(static_cast<char>(first_digit - '0'));
             return make_character(first_digit);
@@ -324,7 +325,7 @@ auto strex::Lexer::number_after_backslash(char ch) -> Token {
 
     // if is a backreference
     int group_number = decimal_value(first_digit, second_digit);
-    if (group_number != 0 && group_number <= group_count_) {
+    if (!in_charset_ && group_number != 0 && group_number <= group_count_) {
         advance();
         if (is_end() || !is_digit(peek()))
             return make_backreference(group_number);
