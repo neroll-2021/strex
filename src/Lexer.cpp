@@ -257,9 +257,10 @@ auto strex::Lexer::character(char ch) -> Token {
 auto strex::Lexer::word_boundary(char ch) -> Token {
     assert(ch == 'b' || ch == 'B');
 
-    if (ch == 'b') {
-        if (in_charset_)
+    if (in_charset_) {
+        if (ch == 'b')
             return make_character('\b');
+        return make_character('B');
     }
     return make_token(TokenType::Word_Boundary);
 }

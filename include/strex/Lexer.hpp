@@ -90,7 +90,8 @@ class Lexer {
     Token character(char ch);
 
     /// Processes a word boundary (`\b`, `\B`).
-    /// If `\b` is in a charset, it will be treated as a character with ASCII 8,
+    /// If in a charset, `\b` will be treated as the character with ASCII 8,
+    /// and `\B` will be treated as the character `B`.
     Token word_boundary(char ch);
 
     /// Processes the number after backslash.
