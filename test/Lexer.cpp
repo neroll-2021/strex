@@ -83,6 +83,25 @@ TEST_CASE("escape character in charset") {
     }
 }
 
+TEST_CASE("word boundary in charset") {
+    Lexer lexer(R"([\b\B])");
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
+        {TokenType::Left_Bracket, '['},  // [
+        {TokenType::Character, '\b'},    // \b
+        {TokenType::Character, 'B'},     // \B
+        {TokenType::Right_Bracket, ']'}, // ]
+        {TokenType::End, '\0'},
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
+    }
+}
+
 TEST_CASE("invalid escape character") {
     Lexer lexer(R"(\d\n\m\y)");
     std::vector<strex::TokenType> expect_types = {
