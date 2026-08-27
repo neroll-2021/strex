@@ -102,6 +102,33 @@ TEST_CASE("word boundary in charset") {
     }
 }
 
+TEST_CASE("backreference in charset") {
+    Lexer lexer(R"((a)(b)[\1\2\3\8])");
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
+        {TokenType::Left_Paren, '('},    // (
+        {TokenType::Character, 'a'},     // a
+        {TokenType::Right_Paren, ')'},   // )
+        {TokenType::Left_Paren, '('},    // (
+        {TokenType::Character, 'b'},     // b
+        {TokenType::Right_Paren, ')'},   // )
+        {TokenType::Left_Bracket, '['},  // [
+        {TokenType::Character, '\1'},    // \1
+        {TokenType::Character, '\2'},    // \2
+        {TokenType::Character, '\3'},    // \3
+        {TokenType::Character, '8'},     // \8
+        {TokenType::Right_Bracket, ']'}, // ]
+        {TokenType::End, '\0'},
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
+    }
+}
+
 TEST_CASE("invalid escape character") {
     Lexer lexer(R"(\d\n\m\y)");
     std::vector<strex::TokenType> expect_types = {
