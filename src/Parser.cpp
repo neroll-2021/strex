@@ -170,19 +170,21 @@ auto strex::Parser::quantifier(std::unique_ptr<ASTNode> content) -> std::unique_
 }
 
 auto strex::Parser::group() -> std::unique_ptr<ASTNode> {
-    // TODO record index of group
     TextRange start_range = previous().range();
-    auto subexpression = alternative();
-    consume(TokenType::Right_Paren, "expect ')' to complete group");
-    TextRange end_range = previous().range();
-
     auto group =
-        std::make_unique<GroupNode>(std::move(subexpression), static_cast<int>(groups_.size()),
-                                    range_union(start_range, end_range));
+        std::make_unique<GroupNode>(nullptr, static_cast<int>(groups_.size()), start_range);
+    groups_.push_back(group.get());
+
     if (group->index() > max_group_number)
         throw ParseError("group number reaches limit {}", max_group_number);
 
-    groups_.push_back(group.get());
+    auto subexpression = alternative();
+    group->set_subexpression(std::move(subexpression));
+
+    consume(TokenType::Right_Paren, "expect ')' to complete group");
+
+    TextRange end_range = previous().range();
+    group->set_range(range_union(start_range, end_range));
 
     return group;
 }

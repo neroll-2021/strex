@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <strex/Charset.hpp>
@@ -99,6 +100,12 @@ class GroupNode : public ASTNode {
     const TextRange &text_range() const { return range_; }
 
     int index() const { return index_; }
+
+    void set_subexpression(std::unique_ptr<ASTNode> subexpression) {
+        node_ = std::move(subexpression);
+    }
+
+    void set_range(const TextRange &range) { range_ = range; }
 
  private:
     constexpr static int max_group_number = 255;
