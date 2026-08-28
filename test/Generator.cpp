@@ -157,6 +157,11 @@ TEST_CASE("group and backreference in the same alternation") {
     }
 }
 
+TEST_CASE("nested group and backreference") {
+    check("(a(b))\\1");
+    check("(a(b))\\2");
+}
+
 TEST_CASE("phone number") {
     check(R"(1(3[0-9]|4[57]|5[0-35-9]|7[0678]|8[0-9])\d{8})");
     check(R"((13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8})");

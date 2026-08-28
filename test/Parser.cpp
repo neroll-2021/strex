@@ -106,6 +106,11 @@ TEST_CASE("group with quantifier") {
           R"((group (sequence (repeat (text "a") [1, 2]), (repeat (text "b") [0, 3]))))");
 }
 
+TEST_CASE("nested group") {
+    check("(a(b))\\1",
+          R"((sequence (group (sequence (text "a"), (group (text "b")))), (backref 1)))");
+}
+
 TEST_CASE("incomplete group") {
     Lexer lexer("((a)");
     auto tokens = lexer.tokenize();
