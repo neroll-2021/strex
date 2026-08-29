@@ -23,7 +23,7 @@ set_languages("c++23")
 set_warnings("allextra", "error")
 
 if has_config("enable_tests") then
-    add_requires("doctest 2.4.11")
+    add_requires("doctest 2.4.12")
 end
 add_requires("argparse 3.2")
 
