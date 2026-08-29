@@ -66,6 +66,9 @@ if(STREX_ENABLE_TESTS)
         GIT_REPOSITORY https://github.com/doctest/doctest.git
         GIT_TAG        v2.4.12
     )
+    # doctest's install rules are not guarded for subproject usage,
+    # disable them explicitly to avoid installing doctest with strex
+    set(DOCTEST_NO_INSTALL ON)
     FetchContent_MakeAvailable(doctest)
 
     add_subdirectory(test/)
@@ -75,5 +78,4 @@ install(TARGETS strex DESTINATION bin)
 install(TARGETS static_library LIBRARY DESTINATION lib)
 install(TARGETS shared_library LIBRARY DESTINATION lib
                                RUNTIME DESTINATION bin)
-install(DIRECTORY include/strex DESTINATION include)
-install(DIRECTORY "${argparse_SOURCE_DIR}/include/argparse" DESTINATION include)
+install(FILES include/strex/strex.hpp DESTINATION include/strex)
