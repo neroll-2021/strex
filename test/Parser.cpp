@@ -129,6 +129,9 @@ TEST_CASE("quantifier2") {
     check("a{1,}", R"((repeat (text "a") [1, 4]))");
     check("[a]{1,5}", R"((repeat (charset include a) [1, 5]))");
     check("[a]{1,}", R"((repeat (charset include a) [1, 4]))");
+    check("a{2147483643,}", R"((repeat (text "a") [2147483643, 2147483646]))");
+    check("a{2147483644,}", R"((repeat (text "a") [2147483644, 2147483647]))");
+    check("a{2147483645,}", R"((repeat (text "a") [2147483645, 2147483647]))");
 }
 
 TEST_CASE("invalid quantifier") {
