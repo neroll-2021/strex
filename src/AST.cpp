@@ -1,5 +1,4 @@
 #include <memory>
-#include <print>
 #include <string>
 #include <vector>
 
@@ -28,9 +27,6 @@ strex::RepeatNode::RepeatNode(std::unique_ptr<ASTNode> node, int lower, int uppe
     assert(lower_ >= 0);
     // maximum value of upper_ is indicated by `Parser`
     assert(upper_ >= 0);
-
-    if (lower_ > upper_)
-        std::println("lower: {}, upper: {}", lower_, upper_);
     assert(lower_ <= upper_);
 }
 
