@@ -569,13 +569,14 @@ auto strex::Lexer::prev_token() const -> const Token & {
 }
 
 char strex::Lexer::peek() const {
-    assert(!is_end());
     return regex_[current_position_];
 }
 
 char strex::Lexer::advance() {
-    assert(!is_end());
-    return regex_[current_position_++];
+    char ch = regex_[current_position_];
+    if (!is_end())
+        current_position_++;
+    return ch;
 }
 
 bool strex::Lexer::is_end() const {
