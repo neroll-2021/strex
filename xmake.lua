@@ -10,6 +10,7 @@ add_rules("mode.debug", "mode.release")
 
 option("dev", { default = false })
 option("enable_tests", { default = true })
+option("enable_benchmarks", { default = false })
 
 if has_config("dev") then
     if is_mode("debug") and is_plat("linux") then
@@ -24,6 +25,9 @@ set_warnings("allextra", "error")
 
 if has_config("enable_tests") then
     add_requires("doctest 2.4.12")
+end
+if has_config("enable_benchmarks") then
+    add_requires("nanobench 4.3.11")
 end
 add_requires("argparse 3.2")
 
@@ -68,4 +72,16 @@ if has_config("enable_tests") then
                 defines = "DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN"
             })
         end
+end
+
+if has_config("enable_benchmarks") then
+    target("bench")
+        set_kind("binary")
+        set_default(false)
+        add_files(
+            "benchmark/main.cpp",
+            "src/*.cpp|main.cpp|compile_option.cpp"
+        )
+        add_includedirs("include")
+        add_packages("nanobench")
 end

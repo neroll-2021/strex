@@ -5,6 +5,7 @@ project(strex VERSION 0.1.1
               LANGUAGES CXX)
 
 option(STREX_ENABLE_TESTS "Enable tests" ON)
+option(STREX_ENABLE_BENCHMARKS "Enable benchmarks" OFF)
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "set build type to 'Release' by default")
@@ -72,6 +73,19 @@ if(STREX_ENABLE_TESTS)
     FetchContent_MakeAvailable(doctest)
 
     add_subdirectory(test/)
+endif()
+
+if(STREX_ENABLE_BENCHMARKS)
+    message(STATUS "enable benchmarks")
+
+    FetchContent_Declare(
+        nanobench
+        GIT_REPOSITORY https://github.com/martinus/nanobench.git
+        GIT_TAG        v4.3.11
+    )
+    FetchContent_MakeAvailable(nanobench)
+    add_executable(bench benchmark/main.cpp)
+    target_link_libraries(bench PRIVATE static_library nanobench)
 endif()
 
 install(TARGETS strex DESTINATION bin)
