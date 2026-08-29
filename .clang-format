@@ -41,7 +41,7 @@ ColumnLimit: 100
 CompactNamespaces: false
 ContinuationIndentWidth: 4
 IndentCaseLabels: true
-IndentPPDirectives: AfterHash
+IndentPPDirectives: BeforeHash
 IndentWidth: 4
 KeepEmptyLinesAtTheStartOfBlocks: true
 MaxEmptyLinesToKeep: 1
