@@ -26,6 +26,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
+add_library(strict_check INTERFACE)
+if(LINUX)
+    target_compile_options(strict_check INTERFACE -Wall -Wextra -Werror)
+endif()
+
 set(LIBRARY_SOURCE_FILES src/AST.cpp
                          src/Charset.cpp
                          src/Generator.cpp
@@ -37,13 +42,13 @@ set(LIBRARY_SOURCE_FILES src/AST.cpp
 
 # static library
 add_library(static_library STATIC ${LIBRARY_SOURCE_FILES})
-target_link_libraries(static_library PUBLIC argparse::argparse)
+target_link_libraries(static_library PUBLIC argparse::argparse strict_check)
 target_include_directories(static_library PUBLIC include)
 set_target_properties(static_library PROPERTIES OUTPUT_NAME strex_static)
 
 # shared library
 add_library(shared_library SHARED ${LIBRARY_SOURCE_FILES})
-target_link_libraries(shared_library PUBLIC argparse::argparse)
+target_link_libraries(shared_library PUBLIC argparse::argparse strict_check)
 target_include_directories(shared_library PUBLIC include)
 set_target_properties(shared_library PROPERTIES OUTPUT_NAME strex_shared)
 
