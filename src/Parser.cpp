@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <span>
 #include <string>
@@ -159,8 +160,12 @@ auto strex::Parser::quantifier(std::unique_ptr<ASTNode> content) -> std::unique_
         int lower = quantifier.repeat_lower();
         // If the upper bound is open-ended (-1), we use the lower bound plus default_max_repeat_count
         // to provide a practical limit for repetition, preventing potential infinite loops.
-        int max_repeat_count = (quantifier.repeat_upper() == -1 ? lower + default_max_repeat_count
-                                                                : quantifier.repeat_upper());
+        const int int_max = std::numeric_limits<int>::max();
+        int max_upper = (lower > int_max - default_max_repeat_count)
+                            ? int_max
+                            : lower + default_max_repeat_count;
+        int max_repeat_count =
+            (quantifier.repeat_upper() == -1 ? max_upper : quantifier.repeat_upper());
         return std::make_unique<RepeatNode>(std::move(content), quantifier.repeat_lower(),
                                             max_repeat_count, quantifier.range());
     }
