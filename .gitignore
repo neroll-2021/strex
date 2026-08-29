@@ -13,3 +13,5 @@ CMakeUserPresets.json
 .vscode/
 .vs/
 .idea/
+
+opencode.json
