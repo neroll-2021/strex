@@ -3,6 +3,7 @@
 #include <regex>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <strex/Generator.hpp>
 #include <strex/Lexer.hpp>
@@ -153,6 +154,30 @@ TEST_CASE("group and backreference in the same alternation") {
 TEST_CASE("nested group and backreference") {
     check("(a(b))\\1");
     check("(a(b))\\2");
+}
+
+TEST_CASE("generate with same seed") {
+    const char *phone = R"(1(3[0-9]|4[57]|5[0-35-9]|7[0678]|8[0-9])\d{8})";
+    Lexer lexer(phone);
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+    Generator generator0(ast.get(), 1);
+    Generator generator1(ast.get(), 1);
+
+    std::vector<std::string> strs0;
+    std::vector<std::string> strs1;
+    strs0.reserve(default_test_count);
+    strs1.reserve(default_test_count);
+    for (int i = 0; i < default_test_count; i++) {
+        strs0.emplace_back(generator0.generate());
+        strs1.emplace_back(generator1.generate());
+    }
+    REQUIRE(strs0.size() == default_test_count);
+    REQUIRE(strs0.size() == strs1.size());
+    for (int i = 0; i < default_test_count; i++) {
+        CHECK(strs0[i] == strs1[i]);
+    }
 }
 
 TEST_CASE("phone number") {

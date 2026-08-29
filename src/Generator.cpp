@@ -12,7 +12,8 @@
 #include <strex/Exception.hpp>
 #include <strex/Generator.hpp>
 
-strex::Generator::Generator(const ASTNode *ast) : ast_(ast) {
+strex::Generator::Generator(const ASTNode *ast, std::size_t seed)
+    : ast_(ast), engine_(static_cast<std::mt19937::result_type>(seed)) {
     assert(ast != nullptr);
 }
 

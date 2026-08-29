@@ -78,3 +78,18 @@ int main() {
         std::println("{}", strex::from_regex(parsed));
 }
 ```
+
+Specify a seed to generate a deterministic string.
+
+```c++
+#include <print>
+#include <strex/strex.hpp>
+
+int main() {
+    const char *regex = R"(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.){3}((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)))";
+    strex::ParsedRegex parsed(regex);
+    for (int i = 0; i < 10; i++)
+        // All strings will be the same.
+        std::println("{}", strex::from_regex(parsed, 0));
+}
+```

@@ -1,6 +1,7 @@
 #ifndef NEROLL_STREX_GENERATOR_HPP
 #define NEROLL_STREX_GENERATOR_HPP
 
+#include <cstddef>
 #include <random>
 #include <string>
 #include <unordered_map>
@@ -11,7 +12,7 @@ namespace strex {
 
 class Generator : public ASTVisitor {
  public:
-    explicit Generator(const ASTNode *ast);
+    explicit Generator(const ASTNode *ast, std::size_t seed = std::random_device{}());
 
     std::string generate();
 
@@ -34,7 +35,7 @@ class Generator : public ASTVisitor {
 
     const ASTNode *ast_;
     std::string generated_string_;
-    std::mt19937 engine_{std::random_device{}()};
+    std::mt19937 engine_;
     std::unordered_map<const GroupNode *, std::string> group_generated_;
 };
 
