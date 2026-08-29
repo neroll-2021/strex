@@ -22,11 +22,6 @@ class ParseError : public std::runtime_error {
         : std::runtime_error(std::format(fmt, std::forward<Args>(args)...)) {}
 };
 
-class GenerateError : public std::runtime_error {
- public:
-    explicit GenerateError(std::string_view message) : std::runtime_error(std::string{message}) {}
-};
-
 class SyntaxNotSupport : public std::runtime_error {
  public:
     explicit SyntaxNotSupport(std::string_view message)

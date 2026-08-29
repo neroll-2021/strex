@@ -4,7 +4,6 @@
 #include <string>
 #include <string_view>
 
-#include <strex/Exception.hpp>
 #include <strex/Generator.hpp>
 #include <strex/Lexer.hpp>
 #include <strex/Parser.hpp>
@@ -136,8 +135,8 @@ TEST_CASE("empty alternation") {
 }
 
 TEST_CASE("group and backreference in the same alternation") {
-    // In this case, Strex cannot guarantee that
-    // the generated string will always match the regular expression.
+    // According to ECMAScript, a backreference to a group that has not
+    // participated in the match matches the empty string.
     Lexer lexer("(aa)|\\1");
     auto tokens = lexer.tokenize();
 
@@ -146,15 +145,9 @@ TEST_CASE("group and backreference in the same alternation") {
 
     Generator generator(ast.get());
 
-    try {
-        std::string s = generator.generate();
-        bool result = (s == "aa" || s == "");
-        CHECK(result);
-    }
-    catch (GenerateError &e) {
-        CHECK_EQ(e.what(),
-                 std::string{"failed to generate string: backreference to optional group"});
-    }
+    std::string s = generator.generate();
+    bool result = (s == "aa" || s == "");
+    CHECK(result);
 }
 
 TEST_CASE("nested group and backreference") {
