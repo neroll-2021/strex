@@ -198,7 +198,7 @@ TEST_CASE("charset include \\s") {
     check(R"([\s])", "(charset include {})", characters(" \r\t\n"));
 }
 
-TEST_CASE("charset include \\s") {
+TEST_CASE("charset exclude \\s") {
     check("[^\\s]", "(charset include {})", exclude(SPACE_CHARACTERS));
 }
 
