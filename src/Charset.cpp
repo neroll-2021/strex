@@ -10,7 +10,7 @@
 #define DIGIT_CHARACTERS "0123456789"
 #define UPPER_CHARACTERS "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define LOWER_CHARACTERS "abcdefghijklmnopqrstuvwxyz"
-#define SPACE_CHARACTERS " \t\r\n"
+#define SPACE_CHARACTERS " \t\r\n\v\f"
 #define UNDER_SCROLL     "_"
 #define WORD_CHARACTERS  DIGIT_CHARACTERS UPPER_CHARACTERS LOWER_CHARACTERS UNDER_SCROLL
 
@@ -72,13 +72,13 @@ auto strex::Charset::non_space() -> const Charset * {
 auto strex::Charset::any() -> const Charset * {
     auto all_characters = [] {
         std::string s;
-        s.resize_and_overwrite(128, [](char *s, std::size_t) {
+        s.resize_and_overwrite(126, [](char *s, std::size_t) {
             int i;
             char ch = '\0';
-            for (i = 0; i < 127; i++, ch++) {
+            for (i = 0; i < 126; i++, ch++) {
                 s[i] = ch;
-                // Skip newline characters as they cannot be matched by `.`.
-                if (ch == '\n')
+                // Skip line terminators as they cannot be matched by `.`.
+                if (ch == '\n' || ch == '\r')
                     i--;
             }
             return i;

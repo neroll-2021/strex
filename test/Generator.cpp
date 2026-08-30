@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <cctype>
 #include <regex>
 #include <string>
 #include <string_view>
@@ -36,7 +34,6 @@ void check(std::string_view regex, int test_count = default_test_count) {
 
         INFO("generated string: \"", str, "\"");
         INFO("AST: ", formatted_ast);
-        REQUIRE(std::ranges::all_of(str, ::isprint));
         CHECK(std::regex_match(str, r));
     }
 }

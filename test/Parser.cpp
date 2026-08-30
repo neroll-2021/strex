@@ -16,7 +16,7 @@
 #define DIGIT_CHARACTERS "0123456789"
 #define UPPER_CHARACTERS "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define LOWER_CHARACTERS "abcdefghijklmnopqrstuvwxyz"
-#define SPACE_CHARACTERS " \t\r\n"
+#define SPACE_CHARACTERS " \t\r\n\v\f"
 #define UNDER_SCROLL     "_"
 #define WORD_CHARACTERS  DIGIT_CHARACTERS LOWER_CHARACTERS UPPER_CHARACTERS UNDER_SCROLL
 
@@ -166,7 +166,7 @@ TEST_CASE("char class \\W") {
 }
 
 TEST_CASE("char class .") {
-    check(".", "(charset include {})", exclude("\n"));
+    check(".", "(charset include {})", exclude("\n\r"));
 }
 
 TEST_CASE("charset include plain character") {
@@ -195,7 +195,7 @@ TEST_CASE("charset exclude \\D") {
 }
 
 TEST_CASE("charset include \\s") {
-    check(R"([\s])", "(charset include {})", characters(" \r\t\n"));
+    check(R"([\s])", "(charset include {})", characters(SPACE_CHARACTERS));
 }
 
 TEST_CASE("charset exclude \\s") {
@@ -203,7 +203,7 @@ TEST_CASE("charset exclude \\s") {
 }
 
 TEST_CASE("charset include \\S") {
-    check("[\\S]", "(charset include {})", exclude(" \r\t\n"));
+    check("[\\S]", "(charset include {})", exclude(SPACE_CHARACTERS));
 }
 
 TEST_CASE("charset exclude \\S") {

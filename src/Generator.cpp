@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <cassert>
-#include <cctype>
 #include <cstddef>
-#include <functional>
 #include <random>
 #include <string>
 #include <string_view>
@@ -34,15 +32,11 @@ void strex::Generator::visit(const TextNode *node) {
 
 static std::string exclude(std::string_view except);
 
-static std::string remove_unprintable(std::string &characters);
-
 void strex::Generator::visit(const CharsetNode *node) {
     const Charset *charset = node->charset();
     std::string characters{charset->alphabet()};
     if (!charset->is_inclusive())
         characters = exclude(characters);
-
-    remove_unprintable(characters);
 
     if (characters.empty())
         return;
@@ -123,12 +117,5 @@ std::string exclude(std::string_view except) {
     std::string characters;
 
     std::ranges::set_difference(ascii_characters, except, std::back_inserter(characters));
-    return characters;
-}
-
-std::string remove_unprintable(std::string &characters) {
-    assert(std::ranges::is_sorted(characters));
-    auto [last, end] = std::ranges::remove_if(characters, std::not_fn(::isprint));
-    characters.erase(last, end);
     return characters;
 }
