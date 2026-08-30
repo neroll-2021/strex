@@ -111,11 +111,33 @@ TEST_CASE("nested group") {
           R"((sequence (group (sequence (text "a"), (group (text "b")))), (backref 1)))");
 }
 
+TEST_CASE("non-capturing group") {
+    check("(?:a)\\1", "(sequence (group non-capturing (text \"a\")), (text \"\1\"))");
+}
+
+TEST_CASE("group in non-capturing group") {
+    check(
+        "(?:a(b))\\1",
+        R"((sequence (group non-capturing (sequence (text "a"), (group (text "b")))), (backref 1)))");
+}
+
+TEST_CASE("truncated non-capturing group") {
+    Lexer lexer("(?:");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+
+    CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError, "expect ')' to complete group");
+}
+
 TEST_CASE("incomplete group") {
     Lexer lexer("((a)");
     auto tokens = lexer.tokenize();
     Parser parser(tokens);
     CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError, "expect ')' to complete group");
+}
+
+TEST_CASE("escape text") {
+    check("\\1", "(text \"\1\")");
 }
 
 TEST_CASE("quantifier") {

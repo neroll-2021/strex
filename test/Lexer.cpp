@@ -445,6 +445,45 @@ TEST_CASE("lazy") {
     }
 }
 
+TEST_CASE("non-capturing group") {
+    Lexer lexer("(?:a)");
+    std::vector<strex::TokenType> expect_types = {
+        TokenType::Left_Paren,          // (
+        TokenType::Non_Capturing_Group, // ?:
+        TokenType::Character,           // a
+        TokenType::Right_Paren,         // )
+        TokenType::End,
+    };
+
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("truncated non-capturing group") {
+    Lexer lexer("(?:");
+    std::vector<strex::TokenType> expect_types = {
+        TokenType::Left_Paren,
+        TokenType::Non_Capturing_Group,
+        TokenType::End,
+    };
+
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i]);
+    }
+}
+
+TEST_CASE("truncated non-capturing group 2") {
+    Lexer lexer("(?");
+
+    // NOLINTNEXTLINE(bugprone-string-literal-with-embedded-nul)
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unknown extension '?\0'");
+}
+
 // TODO
 // TEST_CASE("extension") {
 //     Lexer lexer(R"((?=)(?!)(?<=)(?<!)(?:))");

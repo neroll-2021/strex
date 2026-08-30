@@ -99,7 +99,11 @@ class GroupNode : public ASTNode {
 
     const TextRange &text_range() const { return range_; }
 
-    int index() const { return index_; }
+    int index() const;
+
+    void mark_as_non_capturing() { index_ = 0; }
+
+    bool is_non_capturing() const { return index_ == 0; }
 
     void set_subexpression(std::unique_ptr<ASTNode> subexpression) {
         node_ = std::move(subexpression);

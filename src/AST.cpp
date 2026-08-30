@@ -1,3 +1,4 @@
+#include <cassert>
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,6 +33,11 @@ strex::RepeatNode::RepeatNode(std::unique_ptr<ASTNode> node, int lower, int uppe
 
 strex::GroupNode::GroupNode(std::unique_ptr<ASTNode> node, int index, const TextRange &range)
     : node_(std::move(node)), range_(range), index_(index) {}
+
+int strex::GroupNode::index() const {
+    assert(!is_non_capturing());
+    return index_;
+}
 
 strex::AlternationNode::AlternationNode(std::vector<std::unique_ptr<ASTNode>> elements,
                                         const TextRange &range)

@@ -46,6 +46,8 @@ void strex::test::ASTFormatter::visit(const RepeatNode *node) {
 
 void strex::test::ASTFormatter::visit(const GroupNode *node) {
     formatted_.append("(group ");
+    if (node->is_non_capturing())
+        formatted_.append("non-capturing ");
     format(node->content());
     formatted_.push_back(')');
 }

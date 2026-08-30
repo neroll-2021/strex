@@ -1,6 +1,7 @@
 #ifndef NEROLL_STREX_PARSER_HPP
 #define NEROLL_STREX_PARSER_HPP
 
+#include <cstddef>
 #include <memory>
 #include <span>
 #include <string_view>
@@ -89,9 +90,11 @@ class Parser {
     // TODO Maybe can be given in command line arguments.
     constexpr static int max_group_number = 255;
 
-    std::span<const Token> tokens_;            ///< tokens to be processed
-    std::size_t current_position_{0};          ///< a
-    std::vector<GroupNode *> groups_{nullptr}; ///< groups that has been processed
+    std::span<const Token> tokens_;                      ///< tokens to be processed
+    std::size_t current_position_{0};                    ///< a
+    std::size_t group_count_{0};                         ///< group count that has been processed,
+                                                         ///< including non-capturing group
+    std::vector<GroupNode *> capturing_groups_{nullptr}; ///< groups that has been processed
 };
 
 } // namespace strex

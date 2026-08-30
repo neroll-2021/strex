@@ -461,10 +461,14 @@ auto strex::Lexer::repeat() -> Token {
 
 auto strex::Lexer::extension() -> Token {
     char ext = advance();
-    // TODO support lookahead, lookbehind and non-capture group
+    // TODO support lookahead, lookbehind
     switch (ext) {
         case ':':
-            throw SyntaxNotSupport("non-capture group is not supported");
+            // non-capturing group does not occupy a group number,
+            // remove the count added by `left_paren` in the pre-scan
+            if (!has_preprocessed_)
+                group_count_--;
+            return make_token(TokenType::Non_Capturing_Group);
         case '=':
             throw SyntaxNotSupport("positive lookahead is not supported");
         case '!':

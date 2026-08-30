@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <iterator>
 #include <limits>
 #include <memory>
@@ -176,12 +177,20 @@ auto strex::Parser::quantifier(std::unique_ptr<ASTNode> content) -> std::unique_
 
 auto strex::Parser::group() -> std::unique_ptr<ASTNode> {
     TextRange start_range = previous().range();
-    auto group =
-        std::make_unique<GroupNode>(nullptr, static_cast<int>(groups_.size()), start_range);
-    groups_.push_back(group.get());
+    auto group = std::make_unique<GroupNode>(nullptr, static_cast<int>(capturing_groups_.size()),
+                                             start_range);
 
-    if (group->index() > max_group_number)
-        throw ParseError("group number reaches limit {}", max_group_number);
+    if (peek().is(TokenType::Non_Capturing_Group)) {
+        advance();
+        group->mark_as_non_capturing();
+    } else {
+        capturing_groups_.push_back(group.get());
+    }
+
+    group_count_++;
+
+    if (group_count_ > max_group_number)
+        throw ParseError("group count reaches limit {}", max_group_number);
 
     auto subexpression = alternative();
     group->set_subexpression(std::move(subexpression));
@@ -216,10 +225,10 @@ auto strex::Parser::backreference() -> std::unique_ptr<ASTNode> {
     int group_number = previous().group_number();
     assert(group_number != 0);
     // if backreference is before the associated group, matches zero-length text
-    if (group_number >= static_cast<int>(groups_.size())) {
+    if (group_number >= static_cast<int>(capturing_groups_.size())) {
         return std::make_unique<TextNode>("", previous().range());
     } else {
-        const GroupNode *group = groups_[group_number];
+        const GroupNode *group = capturing_groups_[group_number];
         assert(group != nullptr);
         return std::make_unique<BackrefNode>(group, previous().range());
     }
