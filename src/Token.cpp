@@ -1,4 +1,5 @@
 #include <cassert>
+#include <string_view>
 
 #include <strex/TextRange.hpp>
 #include <strex/Token.hpp>
@@ -18,6 +19,17 @@ auto strex::Token::create_repeat(int repeat_lower, int repeat_upper, const TextR
 
 auto strex::Token::create_backreference(int group_number, const TextRange &range) -> Token {
     return {group_number, range};
+}
+
+auto strex::Token::create_named_backreference(std::string_view name, const TextRange &range)
+    -> Token {
+    assert(!name.empty());
+    return {name, TokenType::Backreference, range};
+}
+
+auto strex::Token::create_group_name(std::string_view name, const TextRange &range) -> Token {
+    assert(!name.empty());
+    return {name, TokenType::Named_Capturing_Group, range};
 }
 
 auto strex::Token::create(TokenType type, const TextRange &range) -> Token {
@@ -45,6 +57,16 @@ int strex::Token::group_number() const {
     return group_number_;
 }
 
+std::string_view strex::Token::group_name() const {
+    assert(is_one_of(TokenType::Named_Capturing_Group, TokenType::Backreference));
+    return group_name_;
+}
+
+bool strex::Token::has_group_name() const {
+    assert(is_one_of(TokenType::Named_Capturing_Group, TokenType::Backreference));
+    return !group_name_.empty();
+}
+
 char strex::Token::character() const {
     assert(is(TokenType::Character) || is(TokenType::Char_Class));
     return character_;
@@ -61,5 +83,8 @@ strex::Token::Token(int repeat_lower, int repeat_upper, const TextRange &range)
 
 strex::Token::Token(int group_number, const TextRange &range)
     : type_(TokenType::Backreference), range_(range), group_number_(group_number) {}
+
+strex::Token::Token(std::string_view group_name, TokenType type, const TextRange &range)
+    : type_(type), group_name_(group_name), range_(range) {}
 
 strex::Token::Token(TokenType type, const TextRange &range) : type_(type), range_(range) {}

@@ -1,5 +1,6 @@
 #include <cassert>
 #include <charconv>
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -102,6 +103,8 @@ auto strex::Lexer::backslash() -> Token {
         case 'b':
         case 'B':
             return word_boundary(ch);
+        case 'k':
+            return named_backreference();
         case 'f':
             return make_character('\f');
         case 'n':
@@ -269,6 +272,33 @@ auto strex::Lexer::word_boundary(char ch) -> Token {
 static bool is_digit(char ch);
 // Checks if a character is a octal digit.
 static bool is_octal(char ch);
+
+auto strex::Lexer::named_backreference() -> Token {
+    if (in_charset_)
+        throw LexicalError("cannot use the \\k escape as a literal");
+
+    if (peek() != '<')
+        throw LexicalError("reference is missing a group name");
+
+    advance();
+
+    if (is_alpha(peek())) {
+        while (is_alpha(peek()) || is_digit(peek()))
+            advance();
+    } else {
+        throw LexicalError("reference is missing a group name");
+    }
+
+    if (peek() != '>')
+        throw LexicalError("backreference is missing its closing delimiter");
+
+    advance(); // skip '>'
+
+    const char *name_begin = regex_.data() + token_begin_position_ + 3;
+    const char *name_end = regex_.data() + current_position_ - 1;
+    std::string_view name(name_begin, name_end);
+    return make_named_backreference(name);
+}
 
 // Calculates the value of octal character sequence.
 template <typename T, typename... Args>
@@ -483,9 +513,9 @@ auto strex::Lexer::extension() -> Token {
                 advance();
                 throw SyntaxNotSupport("negative lookbehind is not supported");
             }
-            // Named capture group is not support yet.
-            // if (is_alpha(ext))
-            //     return named_capture_group();
+            // named capturing group
+            if (is_alpha(ext))
+                return named_capture_group();
             throw LexicalError("unknown extension '?<{}'", ext);
         default:
             throw LexicalError("unknown extension '?{}'", ext);
@@ -493,8 +523,18 @@ auto strex::Lexer::extension() -> Token {
 }
 
 auto strex::Lexer::named_capture_group() -> Token {
-    // TODO
-    return make_token(TokenType::Error);
+    while (is_digit(peek()) || is_alpha(peek()))
+        advance();
+
+    if (peek() != '>')
+        throw LexicalError("group name is missing its closing delimiter");
+
+    advance(); // skip '>'
+
+    const char *name_begin = regex_.data() + token_begin_position_ + 2;
+    const char *name_end = regex_.data() + current_position_ - 1;
+    std::string_view name(name_begin, name_end);
+    return make_group_name(name);
 }
 
 bool strex::Lexer::is_repeat() {
@@ -542,6 +582,10 @@ bool strex::Lexer::is_first_in_charset() const {
     return !tokens_->empty() && prev_token().is(TokenType::Left_Bracket);
 }
 
+bool strex::Lexer::is_alpha(char ch) const {
+    return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_';
+}
+
 auto strex::Lexer::make_char_class(char ch) const -> Token {
     return Token::create_char_class(ch, make_token_range());
 }
@@ -554,8 +598,16 @@ auto strex::Lexer::make_backreference(int group_number) const -> Token {
     return Token::create_backreference(group_number, make_token_range());
 }
 
+auto strex::Lexer::make_named_backreference(std::string_view name) const -> Token {
+    return Token::create_named_backreference(name, make_token_range());
+}
+
 auto strex::Lexer::make_repeat(int repeat_lower, int repeat_upper) const -> Token {
     return Token::create_repeat(repeat_lower, repeat_upper, make_token_range());
+}
+
+auto strex::Lexer::make_group_name(std::string_view group_name) const -> Token {
+    return Token::create_group_name(group_name, make_token_range());
 }
 
 auto strex::Lexer::make_token(TokenType type) const -> Token {

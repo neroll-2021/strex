@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -101,6 +102,12 @@ class GroupNode : public ASTNode {
 
     int index() const;
 
+    bool has_name() const;
+
+    std::string name() const;
+
+    void set_name(std::string_view name);
+
     void mark_as_non_capturing() { index_ = 0; }
 
     bool is_non_capturing() const { return index_ == 0; }
@@ -116,7 +123,8 @@ class GroupNode : public ASTNode {
 
     std::unique_ptr<ASTNode> node_;
     TextRange range_;
-    int index_;
+    std::string name_; ///< the name of named capturing group
+    int index_;        ///< the index of capturing group
 };
 
 class AlternationNode : public ASTNode {

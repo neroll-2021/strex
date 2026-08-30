@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <strex/TextRange.hpp>
@@ -94,6 +95,10 @@ class Lexer {
     /// and `\B` will be treated as the character `B`.
     Token word_boundary(char ch);
 
+    /// Processes a backreference with a group name (\k<name>).
+    /// If in a charset, `\k` will be treated as an error.
+    Token named_backreference();
+
     /// Processes the number after backslash.
     /// Returns a token with type `Character` or `Backreference`.
     /// In a charset, the number is treated as an octal or identity escape
@@ -119,6 +124,9 @@ class Lexer {
     /// Checks if current token is the first element in charset.
     bool is_first_in_charset() const;
 
+    /// Checks if current character is a letter or an underscore.
+    bool is_alpha(char ch) const;
+
     /// Processes a character class, e.g., `\d`, `\w`, `\s`.
     Token make_char_class(char ch) const;
 
@@ -128,8 +136,14 @@ class Lexer {
     /// Returns a token with type `Backreference`.
     Token make_backreference(int group_number) const;
 
+    /// Returns a token with type `Backreference`.
+    Token make_named_backreference(std::string_view name) const;
+
     /// Returns a token with type `Repeat`.
     Token make_repeat(int repeat_lower, int repeat_upper) const;
+
+    /// Returns a token with type `Named_Capturing_Group`.
+    Token make_group_name(std::string_view group_name) const;
 
     /// Returns a token with given type.
     Token make_token(TokenType type) const;

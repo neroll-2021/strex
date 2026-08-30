@@ -153,6 +153,45 @@ TEST_CASE("nested group and backreference") {
     check("(a(b))\\2");
 }
 
+TEST_CASE("named capturing group and backreferences") {
+    // libstdc++ std::regex does not support named capturing group
+
+    Lexer lexer("(?<name>a)\\k<name>");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+    std::string s = generator.generate();
+    CHECK(s == "aa");
+}
+
+TEST_CASE("named backreference before named capturing group") {
+    // libstdc++ std::regex does not support named capturing group
+
+    Lexer lexer("\\k<name>(?<name>a)");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+    std::string s = generator.generate();
+    CHECK(s == "a");
+}
+
+TEST_CASE("named backreference in named capturing group") {
+    // libstdc++ std::regex does not support named capturing group
+
+    Lexer lexer("(?<name>\\k<name>)");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+    std::string s = generator.generate();
+    CHECK(s == "");
+}
+
 TEST_CASE("generate with same seed") {
     const char *phone = R"(1(3[0-9]|4[57]|5[0-35-9]|7[0678]|8[0-9])\d{8})";
     Lexer lexer(phone);

@@ -4,6 +4,7 @@
 #define NEROLL_STREX_TOKEN_HPP
 
 #include <string>
+#include <string_view>
 
 #include <strex/TextRange.hpp>
 
@@ -24,13 +25,13 @@ enum class TokenType {
 
     Word_Boundary, ///< `\b`
 
-    Non_Capturing_Group, ///< `(?:...)`
-    Named_Capture_Group, ///< `(?<name>...)`
-    Positive_Lookahead,  ///< `(?=...)`
-    Negative_Lookahead,  ///< `(?!...)`
-    Positive_Lookbehind, ///< `(?<=...)`
-    Negative_Lookbehind, ///< `(?<!...)`
-    Ignored_Extension,   ///< extensions that are ignored
+    Non_Capturing_Group,   ///< `(?:...)`
+    Named_Capturing_Group, ///< `(?<name>...)`
+    Positive_Lookahead,    ///< `(?=...)`
+    Negative_Lookahead,    ///< `(?!...)`
+    Positive_Lookbehind,   ///< `(?<=...)`
+    Negative_Lookbehind,   ///< `(?<!...)`
+    Ignored_Extension,     ///< extensions that are ignored
 
     Backreference, ///< backreferences
 
@@ -62,6 +63,12 @@ class Token {
     /// Creates a token with type `Backreference`.
     static Token create_backreference(int group_number, const TextRange &range);
 
+    /// Creates a token with type `Backreference`, with given name.
+    static Token create_named_backreference(std::string_view name, const TextRange &range);
+
+    /// Creates a token with type `Named_Capturing_Group`, with given name.
+    static Token create_group_name(std::string_view name, const TextRange &range);
+
     /// Creates a token with specific type.
     static Token create(TokenType type, const TextRange &range);
 
@@ -91,6 +98,14 @@ class Token {
     /// Can only be called when token type is `Backreference`.
     int group_number() const;
 
+    /// Returns group name of a named capturing group or a backreference.
+    /// Can only be called when token type is `Named_Capturing_Group` or `Backreference`.
+    std::string_view group_name() const;
+
+    /// Returns whether this token has a group name.
+    /// Can only be called when token type is `Named_Capturing_Group` or `Backreference`.
+    bool has_group_name() const;
+
     /// Returns character represented by token.
     /// Can only be called when token type is `Character` or `Char_Class`.
     char character() const;
@@ -104,6 +119,9 @@ class Token {
 
     /// Constructs Token with type `Backreference`.
     Token(int group_number, const TextRange &range);
+
+    /// Constructs Token with given group name and type.
+    Token(std::string_view group_name, TokenType type, const TextRange &range);
 
     /// Constructs Token with specific type.
     Token(TokenType type, const TextRange &range);

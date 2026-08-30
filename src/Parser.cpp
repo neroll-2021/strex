@@ -72,6 +72,8 @@
 strex::Parser::Parser(std::span<const Token> tokens) : tokens_(tokens) {}
 
 auto strex::Parser::parse() -> std::unique_ptr<ASTNode> {
+    collect_group_names();
+
     auto ast = alternative();
 
     if (!match(TokenType::End)) {
@@ -81,6 +83,14 @@ auto strex::Parser::parse() -> std::unique_ptr<ASTNode> {
         throw ParseError("invalid regex");
     }
     return ast;
+}
+
+void strex::Parser::collect_group_names() {
+    for (const auto &token : tokens_) {
+        if (token.is(TokenType::Named_Capturing_Group)) {
+            all_group_names_.insert(token.group_name());
+        }
+    }
 }
 
 auto strex::Parser::alternative() -> std::unique_ptr<ASTNode> {
@@ -183,9 +193,16 @@ auto strex::Parser::group() -> std::unique_ptr<ASTNode> {
     if (peek().is(TokenType::Non_Capturing_Group)) {
         advance();
         group->mark_as_non_capturing();
-    } else {
-        capturing_groups_.push_back(group.get());
+    } else if (peek().is(TokenType::Named_Capturing_Group)) {
+        advance();
+        group->set_name(previous().group_name());
+        if (named_groups_.contains(group->name()))
+            throw ParseError("group name '{}' is already defined", group->name());
+        named_groups_.insert({previous().group_name(), group.get()});
     }
+
+    if (!group->is_non_capturing())
+        capturing_groups_.push_back(group.get());
 
     group_count_++;
 
@@ -222,15 +239,33 @@ auto strex::Parser::charset() -> std::unique_ptr<ASTNode> {
 }
 
 auto strex::Parser::backreference() -> std::unique_ptr<ASTNode> {
-    int group_number = previous().group_number();
-    assert(group_number != 0);
-    // if backreference is before the associated group, matches zero-length text
-    if (group_number >= static_cast<int>(capturing_groups_.size())) {
-        return std::make_unique<TextNode>("", previous().range());
+    if (previous().has_group_name()) {
+        std::string_view group_name = previous().group_name();
+        auto iter = named_groups_.find(group_name);
+        // if the referenced group has already been processed
+        if (iter != named_groups_.end()) {
+            const GroupNode *group = iter->second;
+            assert(group != nullptr);
+            return std::make_unique<BackrefNode>(group, previous().range());
+        }
+
+        // if the referenced group will be processed later
+        if (all_group_names_.contains(group_name))
+            return std::make_unique<TextNode>("", previous().range());
+
+        // if the referenced group never occurs in regex
+        throw ParseError("backreference target '{}' does not exist", group_name);
     } else {
-        const GroupNode *group = capturing_groups_[group_number];
-        assert(group != nullptr);
-        return std::make_unique<BackrefNode>(group, previous().range());
+        int group_number = previous().group_number();
+        assert(group_number != 0);
+        // if backreference is before the associated group, matches zero-length text
+        if (group_number >= static_cast<int>(capturing_groups_.size())) {
+            return std::make_unique<TextNode>("", previous().range());
+        } else {
+            const GroupNode *group = capturing_groups_[group_number];
+            assert(group != nullptr);
+            return std::make_unique<BackrefNode>(group, previous().range());
+        }
     }
 }
 

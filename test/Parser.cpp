@@ -129,6 +129,45 @@ TEST_CASE("truncated non-capturing group") {
     CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError, "expect ')' to complete group");
 }
 
+TEST_CASE("named capturing group") {
+    check("(?<name>a)", R"((group name (text "a")))");
+}
+
+TEST_CASE("named capturing group with backreference") {
+    check("(?<name>a)\\k<name>", R"((sequence (group name (text "a")), (backref 1)))");
+}
+
+TEST_CASE("multiple named capturing groups with backreferences") {
+    check(
+        "(?<name1>a)(?<name2>b)\\k<name2>\\k<name1>",
+        R"((sequence (group name1 (text "a")), (group name2 (text "b")), (backref 2), (backref 1)))");
+}
+
+TEST_CASE("duplicate named capturing group") {
+    Lexer lexer("(?<name>a)(?<name>b)");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+
+    CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError, "group name 'name' is already defined");
+}
+
+TEST_CASE("named backreference before named capturing group") {
+    check("\\k<name>(?<name>a)", R"((sequence (text ""), (group name (text "a"))))");
+}
+
+TEST_CASE("named backreference in named capturing group") {
+    check("(?<name>a\\k<name>)", R"((group name (sequence (text "a"), (backref 1))))");
+}
+
+TEST_CASE("target of named backreference does not exist") {
+    Lexer lexer("\\k<name>");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+
+    CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError,
+                            "backreference target 'name' does not exist");
+}
+
 TEST_CASE("incomplete group") {
     Lexer lexer("((a)");
     auto tokens = lexer.tokenize();

@@ -484,6 +484,95 @@ TEST_CASE("truncated non-capturing group 2") {
     CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unknown extension '?\0'");
 }
 
+TEST_CASE("named capturing group") {
+    Lexer lexer("(?<this_is_name1>a)");
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
+        {TokenType::Left_Paren, '\0'},            // (
+        {TokenType::Named_Capturing_Group, '\0'}, // ?<this_is_name1>
+        {TokenType::Character, 'a'},              // a
+        {TokenType::Right_Paren, '\0'},           // )
+        {TokenType::End, '\0'},
+    };
+
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character))
+            CHECK(tokens[i].character() == expect_types[i].second);
+    }
+    CHECK(tokens[1].group_name() == "this_is_name1");
+}
+
+TEST_CASE("named capturing group missing closing delimiter") {
+    Lexer lexer("(?<this_is_name)");
+
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
+                            "group name is missing its closing delimiter");
+}
+
+TEST_CASE("named capturing group missing name") {
+    Lexer lexer("(?<>)");
+
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unknown extension '?<>'");
+}
+
+TEST_CASE("named backreference") {
+    Lexer lexer("(?<name>a)\\k<name>b");
+
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
+        {TokenType::Left_Paren, '\0'},            // (
+        {TokenType::Named_Capturing_Group, '\0'}, // ?<name>
+        {TokenType::Character, 'a'},              // a
+        {TokenType::Right_Paren, '\0'},           // )
+        {TokenType::Backreference, '\0'},         // \k<name>
+        {TokenType::Character, 'b'},              // b
+        {TokenType::End, '\0'},
+    };
+
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character))
+            CHECK(tokens[i].character() == expect_types[i].second);
+    }
+    CHECK(tokens[1].group_name() == "name");
+    CHECK(tokens[4].group_name() == "name");
+}
+
+TEST_CASE("named backreference missing name") {
+    Lexer lexer("\\k");
+
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "reference is missing a group name");
+}
+
+TEST_CASE("named backreference missing name 2") {
+    Lexer lexer("\\k<");
+
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "reference is missing a group name");
+}
+
+TEST_CASE("named backreference missing name 3") {
+    Lexer lexer("\\k<>");
+
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "reference is missing a group name");
+}
+
+TEST_CASE("named backreference missing closing delimiter") {
+    Lexer lexer("\\k<name");
+
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
+                            "backreference is missing its closing delimiter");
+}
+
+TEST_CASE("named backreference in charset") {
+    Lexer lexer("[\\k]");
+
+    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
+                            "cannot use the \\k escape as a literal");
+}
+
 // TODO
 // TEST_CASE("extension") {
 //     Lexer lexer(R"((?=)(?!)(?<=)(?<!)(?:))");

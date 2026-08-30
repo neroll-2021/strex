@@ -1,6 +1,7 @@
 #include <cassert>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <strex/AST.hpp>
@@ -37,6 +38,21 @@ strex::GroupNode::GroupNode(std::unique_ptr<ASTNode> node, int index, const Text
 int strex::GroupNode::index() const {
     assert(!is_non_capturing());
     return index_;
+}
+
+bool strex::GroupNode::has_name() const {
+    assert(!is_non_capturing());
+    return !name_.empty();
+}
+
+std::string strex::GroupNode::name() const {
+    assert(!is_non_capturing());
+    return name_;
+}
+
+void strex::GroupNode::set_name(std::string_view name) {
+    assert(!is_non_capturing());
+    name_ = name;
 }
 
 strex::AlternationNode::AlternationNode(std::vector<std::unique_ptr<ASTNode>> elements,

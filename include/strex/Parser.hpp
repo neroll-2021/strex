@@ -5,6 +5,8 @@
 #include <memory>
 #include <span>
 #include <string_view>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <strex/AST.hpp>
@@ -23,6 +25,10 @@ class Parser {
     std::unique_ptr<ASTNode> parse();
 
  private:
+    /// Collects all group names.
+    /// This makes backreferences to groups appearing later can be recognized.
+    void collect_group_names();
+
     /// Returns a TextNode`, `CharsetNode`, `GroupNode`, `RepeatNode` or `AlternationNode`.
     std::unique_ptr<ASTNode> alternative();
 
@@ -95,6 +101,9 @@ class Parser {
     std::size_t group_count_{0};                         ///< group count that has been processed,
                                                          ///< including non-capturing group
     std::vector<GroupNode *> capturing_groups_{nullptr}; ///< groups that has been processed
+    std::unordered_map<std::string_view, const GroupNode *>
+        named_groups_; ///< named capturing groups that have been processed
+    std::unordered_set<std::string_view> all_group_names_; ///< all group names in regex
 };
 
 } // namespace strex
