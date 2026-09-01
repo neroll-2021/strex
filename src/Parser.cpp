@@ -228,9 +228,17 @@ auto strex::Parser::charset() -> std::unique_ptr<ASTNode> {
     bool is_inclusive = !match(TokenType::Caret);
     std::string characters = charset_item_list();
 
+    // TODO remove this when API can distinguish between an empty string and 'nothing to generate'
+    if (is_inclusive && characters.empty())
+        throw ParseError("empty charset [] does not match anything (even empty string!)");
+
     if (!is_inclusive)
         characters = exclude(characters);
     is_inclusive = true;
+
+    // TODO remove this when strex supports non-ascii characters
+    if (characters.empty())
+        throw ParseError("cannot produce non-ascii character");
 
     const Token &end_token = consume(TokenType::Right_Bracket, "expect ']' to close character set");
     TextRange range = range_union(start_range, end_token.range());

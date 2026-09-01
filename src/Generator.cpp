@@ -35,11 +35,11 @@ static std::string exclude(std::string_view except);
 void strex::Generator::visit(const CharsetNode *node) {
     const Charset *charset = node->charset();
     std::string characters{charset->alphabet()};
+
+    assert(!characters.empty());
+
     if (!charset->is_inclusive())
         characters = exclude(characters);
-
-    if (characters.empty())
-        return;
 
     if (characters.size() == 1) {
         generated_string_.push_back(characters[0]);

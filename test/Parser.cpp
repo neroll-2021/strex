@@ -287,8 +287,44 @@ TEST_CASE("charset exclude \\W") {
     check("[^\\W]", "(charset include {})", characters(WORD_CHARACTERS));
 }
 
+TEST_CASE("charset exclude nothing") {
+    check("[^]", "(charset include {})", ascii_characters());
+}
+
 TEST_CASE("all characters") {
     check("[\\d\\D]", "(charset include {})", ascii_characters());
+}
+
+TEST_CASE("empty charset") {
+    Lexer lexer("[]");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    CHECK_THROWS_WITH_AS(parser.parse(),
+                         "empty charset [] does not match anything (even empty string!)",
+                         ParseError);
+}
+
+TEST_CASE("empty charset in alternation") {
+    Lexer lexer("a|[]");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    CHECK_THROWS_WITH_AS(parser.parse(),
+                         "empty charset [] does not match anything (even empty string!)",
+                         ParseError);
+}
+
+TEST_CASE("empty charset in alternation 2") {
+    Lexer lexer("a|[^\\x00-\\x7f]");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    CHECK_THROWS_WITH_AS(parser.parse(), "cannot produce non-ascii character", ParseError);
+}
+
+TEST_CASE("empty charset 2") {
+    Lexer lexer("[^\\x00-\\x7f]");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    CHECK_THROWS_WITH_AS(parser.parse(), "cannot produce non-ascii character", ParseError);
 }
 
 TEST_CASE("backreference") {
