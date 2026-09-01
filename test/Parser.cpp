@@ -126,7 +126,7 @@ TEST_CASE("truncated non-capturing group") {
     auto tokens = lexer.tokenize();
     Parser parser(tokens);
 
-    CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError, "expect ')' to complete group");
+    CHECK_THROWS_WITH_AS(parser.parse(), "expect ')' to complete group", ParseError);
 }
 
 TEST_CASE("named capturing group") {
@@ -148,7 +148,7 @@ TEST_CASE("duplicate named capturing group") {
     auto tokens = lexer.tokenize();
     Parser parser(tokens);
 
-    CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError, "group name 'name' is already defined");
+    CHECK_THROWS_WITH_AS(parser.parse(), "group name 'name' is already defined", ParseError);
 }
 
 TEST_CASE("named backreference before named capturing group") {
@@ -164,15 +164,14 @@ TEST_CASE("target of named backreference does not exist") {
     auto tokens = lexer.tokenize();
     Parser parser(tokens);
 
-    CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError,
-                            "backreference target 'name' does not exist");
+    CHECK_THROWS_WITH_AS(parser.parse(), "backreference target 'name' does not exist", ParseError);
 }
 
 TEST_CASE("incomplete group") {
     Lexer lexer("((a)");
     auto tokens = lexer.tokenize();
     Parser parser(tokens);
-    CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError, "expect ')' to complete group");
+    CHECK_THROWS_WITH_AS(parser.parse(), "expect ')' to complete group", ParseError);
 }
 
 TEST_CASE("escape text") {
@@ -199,7 +198,7 @@ TEST_CASE("invalid quantifier") {
     Lexer lexer("a{1,2}{3,4}");
     auto tokens = lexer.tokenize();
     Parser parser(tokens);
-    CHECK_THROWS_AS_MESSAGE(parser.parse(), ParseError, "the preceding token is not quantifiable");
+    CHECK_THROWS_WITH_AS(parser.parse(), "the preceding token is not quantifiable", ParseError);
 }
 
 TEST_CASE("char class \\d") {

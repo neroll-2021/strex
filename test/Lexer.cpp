@@ -346,9 +346,9 @@ TEST_CASE("not repetition") {
 
 TEST_CASE("invalid repeat range") {
     Lexer lexer(R"(a{2,1})");
-    CHECK_THROWS_AS_MESSAGE(
-        lexer.tokenize(), LexicalError,
-        "invalid repeat quantifier: lower bound 2 is greater than upper bound 1");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(),
+                         "invalid repeat quantifier: lower bound 2 is greater than upper bound 1",
+                         LexicalError);
 }
 
 TEST_CASE("brace in charset") {
@@ -388,8 +388,8 @@ TEST_CASE("characters") {
 
 TEST_CASE("trailing backslash") {
     Lexer lexer(R"(\)");
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
-                            "pattern may not end with a trailing backslash");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "pattern may not end with a trailing backslash",
+                         LexicalError);
 }
 
 TEST_CASE("hyphen") {
@@ -481,7 +481,7 @@ TEST_CASE("truncated non-capturing group 2") {
     Lexer lexer("(?");
 
     // NOLINTNEXTLINE(bugprone-string-literal-with-embedded-nul)
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unknown extension '?\0'");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "unknown extension '?\0'", LexicalError);
 }
 
 TEST_CASE("named capturing group") {
@@ -507,14 +507,14 @@ TEST_CASE("named capturing group") {
 TEST_CASE("named capturing group missing closing delimiter") {
     Lexer lexer("(?<this_is_name)");
 
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
-                            "group name is missing its closing delimiter");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "group name is missing its closing delimiter",
+                         LexicalError);
 }
 
 TEST_CASE("named capturing group missing name") {
     Lexer lexer("(?<>)");
 
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unknown extension '?<>'");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "unknown extension '?<>'", LexicalError);
 }
 
 TEST_CASE("named backreference") {
@@ -544,33 +544,32 @@ TEST_CASE("named backreference") {
 TEST_CASE("named backreference missing name") {
     Lexer lexer("\\k");
 
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "reference is missing a group name");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "reference is missing a group name", LexicalError);
 }
 
 TEST_CASE("named backreference missing name 2") {
     Lexer lexer("\\k<");
 
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "reference is missing a group name");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "reference is missing a group name", LexicalError);
 }
 
 TEST_CASE("named backreference missing name 3") {
     Lexer lexer("\\k<>");
 
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "reference is missing a group name");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "reference is missing a group name", LexicalError);
 }
 
 TEST_CASE("named backreference missing closing delimiter") {
     Lexer lexer("\\k<name");
 
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
-                            "backreference is missing its closing delimiter");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "backreference is missing its closing delimiter",
+                         LexicalError);
 }
 
 TEST_CASE("named backreference in charset") {
     Lexer lexer("[\\k]");
 
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
-                            "cannot use the \\k escape as a literal");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "cannot use the \\k escape as a literal", LexicalError);
 }
 
 // TODO
@@ -603,7 +602,7 @@ TEST_CASE("named backreference in charset") {
 
 TEST_CASE("invalid extension") {
     Lexer lexer(R"((?a))");
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unknown extension '?a'");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "unknown extension '?a'", LexicalError);
 }
 
 TEST_CASE("hex number2") {
@@ -647,7 +646,7 @@ TEST_CASE("hex number4") {
 
 TEST_CASE("unsupported hex value") {
     Lexer lexer(R"(\uffff)");
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError, "unsupported hex value 0xffff");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "unsupported hex value ffff", LexicalError);
 }
 
 TEST_CASE("dot") {
@@ -685,6 +684,6 @@ TEST_CASE("non-ascii") {
 
 TEST_CASE("non-ascii in charset") {
     Lexer lexer("[你好]");
-    CHECK_THROWS_AS_MESSAGE(lexer.tokenize(), LexicalError,
-                            "non-ascii character in charset is not supported");
+    CHECK_THROWS_WITH_AS(lexer.tokenize(), "non-ascii character in charset is not supported",
+                         LexicalError);
 }
