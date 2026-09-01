@@ -441,14 +441,12 @@ auto strex::Lexer::repeat() -> Token {
     int repeat_lower = -1;
     int repeat_upper = -1;
     if (ch == ',') {
-        if (!count_str.empty()) {
-            repeat_lower = to_repeat_count(count_str);
-        }
+        assert(!count_str.empty() &&
+               "'{,' cannot be the beginning of a repetition quantifier, check is_repeat()!");
+        repeat_lower = to_repeat_count(count_str);
     } else if (ch == '}') {
-        if (count_str.empty()) {
-            current_position_ = position;
-            return make_character('{');
-        }
+        assert(!count_str.empty() &&
+               "'{}' cannot be treated as a repetition quantifier, check is_repeat()!");
         repeat_lower = to_repeat_count(count_str);
         repeat_upper = repeat_lower;
         return make_repeat(repeat_lower, repeat_upper);
@@ -540,6 +538,19 @@ auto strex::Lexer::named_capture_group() -> Token {
 bool strex::Lexer::is_repeat() {
     // TODO Use scope guard to simplify code.
     auto position = current_position_;
+
+    // per ECMAScript, digits must precede ','
+
+    // '{,' cannot be the beginning of a repetition quantifier
+    if (peek() == ',') {
+        return false;
+    }
+
+    // '{}' cannot be treated as a repetition quantifier
+    if (peek() == '}') {
+        return false;
+    }
+
     while (!is_end() && is_digit(peek())) {
         advance();
     }
@@ -558,7 +569,7 @@ bool strex::Lexer::is_repeat() {
         return false;
     }
 
-    advance();
+    advance(); // skip ','
 
     if (is_end()) {
         current_position_ = position;

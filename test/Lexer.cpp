@@ -290,7 +290,11 @@ TEST_CASE("repeat") {
         {TokenType::Character, {}},      // b
         {TokenType::Repeat, {1, -1}},    // {1,}
         {TokenType::Character, {}},      // c
-        {TokenType::Repeat, {0, 10}},    // {,10}
+        {TokenType::Character, {}},      // {
+        {TokenType::Character, {}},      // ,
+        {TokenType::Character, {}},      // 1
+        {TokenType::Character, {}},      // 0
+        {TokenType::Character, {}},      // }
         {TokenType::Character, {}},      // d
         {TokenType::Repeat, {5, 5}},     // {5}
         {TokenType::Character, {}},      // e
