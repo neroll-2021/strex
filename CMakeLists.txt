@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(strex VERSION 0.1.1
+project(strex VERSION 0.2.0
               DESCRIPTION "A random string generator that generates strings from regular expression."
               LANGUAGES CXX)
 

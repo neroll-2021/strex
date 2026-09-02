@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    argparse::ArgumentParser program("strex", "strex 0.1.1");
+    argparse::ArgumentParser program("strex", "strex 0.2.0");
 
     program.add_description("Generate strings that match the given regular expression.");
 
