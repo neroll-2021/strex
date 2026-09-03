@@ -86,6 +86,13 @@ class Lexer {
     /// Returns a token with type `Dollar` or `Character`.
     Token dollar();
 
+    /// Processes control character escapes e.g. `\cA`, per ECMA-262 Annex B.
+    /// Returns a token with type `Character`.
+    /// In a charset, `\c` followed by a digit or `_` is also a control character.
+    /// If `\c` is not followed by a letter, it is treated as a literal backslash
+    /// followed by the character `c`.
+    Token control();
+
     /// Processes the character.
     /// Checks if the character is valid, returns a token with type `Character`.
     Token character(char ch);

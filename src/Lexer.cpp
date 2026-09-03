@@ -93,6 +93,8 @@ auto strex::Lexer::backslash() -> Token {
 
     char ch = advance();
     switch (ch) {
+        case 'c':
+            return control();
         case 'd':
         case 'D':
         case 's':
@@ -251,6 +253,30 @@ auto strex::Lexer::dollar() -> Token {
     return make_token(TokenType::Dollar);
 }
 
+// Checks if a character is a digit.
+static bool is_digit(char ch);
+
+// Per ECMA-262 Annex B: `\c` followed by a letter is a control character
+// (the letter's code point modulo 32); the same applies to `\c` followed by
+// a digit or `_` inside a charset. Otherwise `\c` falls back to a literal
+// backslash. Note that https://regex101.com/ flags `\c` followed by a
+// non-letter as invalid, which differs from node and the specification.
+auto strex::Lexer::control() -> Token {
+    if (is_end()) {
+        current_position_--;
+        return make_character('\\');
+    }
+    char ch = advance();
+    if ('a' <= ch && ch <= 'z')
+        return make_character(static_cast<char>(ch - 'a' + 1));
+    if ('A' <= ch && ch <= 'Z')
+        return make_character(static_cast<char>(ch - 'A' + 1));
+    if (in_charset_ && (is_digit(ch) || ch == '_'))
+        return make_character(static_cast<char>(ch % 32));
+    current_position_ -= 2;
+    return make_character('\\');
+}
+
 auto strex::Lexer::character(char ch) -> Token {
     if (in_charset_ && !isascii(ch))
         throw LexicalError("non-ascii character in charset is not supported");
@@ -268,8 +294,6 @@ auto strex::Lexer::word_boundary(char ch) -> Token {
     return make_token(TokenType::Word_Boundary);
 }
 
-// Checks if a character is a digit.
-static bool is_digit(char ch);
 // Checks if a character is a octal digit.
 static bool is_octal(char ch);
 
