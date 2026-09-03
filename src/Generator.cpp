@@ -4,6 +4,7 @@
 #include <random>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <strex/AST.hpp>
 #include <strex/Charset.hpp>
@@ -57,15 +58,58 @@ void strex::Generator::visit(const SequenceNode *node) {
     }
 }
 
+namespace strex {
+namespace {
+
+    /// Collects every group node in a subtree, used by `visit(RepeatNode)` to reset
+    /// captures of the repeated subtree at the start of each iteration
+    /// (ECMA-262 RepeatMatcher).
+    class GroupCollector : public ASTVisitor {
+     public:
+        void visit(const TextNode *) override {}
+
+        void visit(const CharsetNode *) override {}
+
+        void visit(const BackrefNode *) override {}
+
+        void visit(const SequenceNode *node) override {
+            for (const auto &element : node->sequence())
+                element->accept(this);
+        }
+
+        void visit(const RepeatNode *node) override { node->content()->accept(this); }
+
+        void visit(const GroupNode *node) override {
+            groups.push_back(node);
+            node->content()->accept(this);
+        }
+
+        void visit(const AlternationNode *node) override {
+            for (const auto &element : node->elements())
+                element->accept(this);
+        }
+
+        std::vector<const GroupNode *> groups;
+    };
+
+} // namespace
+} // namespace strex
+
 void strex::Generator::visit(const RepeatNode *node) {
     int lower = node->repeat_lower();
     int upper = node->repeat_upper();
 
     std::uniform_int_distribution<int> random(lower, upper);
 
+    GroupCollector collector;
+    node->content()->accept(&collector);
+
     int repeat_count = random(engine_);
-    while (repeat_count--)
+    while (repeat_count--) {
+        for (const GroupNode *group : collector.groups)
+            group_generated_.erase(group);
         generate(node->content());
+    }
 }
 
 void strex::Generator::visit(const GroupNode *node) {

@@ -153,6 +153,62 @@ TEST_CASE("nested group and backreference") {
     check("(a(b))\\2");
 }
 
+TEST_CASE("backreference after quantified group") {
+    // the capture of the last iteration is kept after the quantifier
+    check("(a)+\\1");
+}
+
+TEST_CASE("backreference in repeated group") {
+    // ECMA-262 RepeatMatcher resets the captures of the repeated subtree at
+    // the start of each iteration, so the backreference inside the quantifier
+    // only sees the current iteration's capture. libstdc++ std::regex rejects
+    // self-referencing groups ("Back-reference referred to an opened
+    // sub-expression"), so fixed expectations are used instead of check().
+    {
+        Lexer lexer("(3\\1){6}");
+        auto tokens = lexer.tokenize();
+        Parser parser(tokens);
+        auto ast = parser.parse();
+
+        Generator generator(ast.get());
+        CHECK(generator.generate() == "333333");
+    }
+    {
+        // libstdc++ std::regex does not support named capturing group
+        Lexer lexer("(?<a>x\\k<a>){3}");
+        auto tokens = lexer.tokenize();
+        Parser parser(tokens);
+        auto ast = parser.parse();
+
+        Generator generator(ast.get());
+        CHECK(generator.generate() == "xxx");
+    }
+}
+
+TEST_CASE("backreference after quantified alternation") {
+    // per ECMA-262, a capture that did not participate in the last iteration
+    // is undefined, so the backreference matches empty unless the last
+    // iteration took the "(1)" branch. Valid outputs are strings over
+    // {'1', '2'} ending with '2' or with "11". libstdc++ std::regex accepts
+    // invalid strings like "121" here (it deviates from the spec), so the
+    // valid set is checked manually.
+    Lexer lexer("(?:(1)|2)+\\1");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+
+    for (int i = 0; i < 200; i++) {
+        std::string s = generator.generate();
+        INFO("generated string: \"", s, "\"");
+        CHECK(!s.empty());
+        CHECK(s.find_first_not_of("12") == std::string::npos);
+        bool valid_end = s.ends_with('2') || s.ends_with("11");
+        CHECK(valid_end);
+    }
+}
+
 TEST_CASE("named capturing group and backreferences") {
     // libstdc++ std::regex does not support named capturing group
 
