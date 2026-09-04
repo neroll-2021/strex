@@ -1,59 +1,92 @@
 # Strex
+
 [简体中文](README_zh.md)
 
-A random string generator that generates strings from regular expression.
+Strex generates random strings that match a given regular expression. The syntax and the matching rules follow the ECMAScript standard closely. It works both as a command-line tool and as a C++23 library.
 
 This project is inspired by [daidodo/regxstring](https://github.com/daidodo/regxstring) and [elarsonSU/egret](https://github.com/elarsonSU/egret).
 
+## Requirements
+
+- A compiler with C++23 support (GCC 14+, Clang 18+, or MSVC 17.8+)
+- [XMake](https://xmake.io/) 2.9.8+ or [CMake](https://cmake.org/) 3.28+
+- Linux or Windows
+- Network access on the first build, because dependencies are downloaded automatically
+
 ## Build
+
 ### XMake
-This project uses [XMake](https://xmake.io/) as the build system. XMake is not only a simple and easy-to-use build system, but also a powerful package manager. Strex depends on [argparse](https://github.com/p-ranav/argparse) and [doctest](https://github.com/doctest/doctest), using XMake makes it easy to manage dependencies.
 
-To build Strex, first enter the root directory of project, and then execute `xmake`in terminal. If you have not previously installed argparse and doctest using xmake, xmake will prompt you to install these dependencies. In this case, simply enter `y` to continue.
-
-Wait for a while, the project will be built.
-
-### CMake
-At the root directory of the project, enter these commands in terminal.
-
-```shell
-mkdir build
-cd build
-cmake ..
+```sh
+xmake
 ```
 
-If CMake choose *Makefile* as generator, then enter `make` in terminal to build the project.
-
-## Run
-### XMake
-After building the project, run it using `xmake run strex`. You can pass command-line arguments to the program, for example, you can enter `xmake run strex --help` to display help information. Anything after `xmake run strex` will be treated as command-line arguments.
-
-Enter `xmake run strex -r "<regex>"` to generate a random string based on a regular expression. Note that if your regular expression contains double quotes, you may need to add a backslash before them to escape them.
-
-To generate more than one string, you can use '-n' to specify the number of strings you want to generate. For example, enter `xmake run strex -r "<regex> -n 10"` to generate 10 strings that match the regular expression.
-
 ### CMake
-After building the project, enter `./strex` in `build` directory that you have created, then the program should be running.
 
-To know usage of Strex, enter `./strex --help` to print help information.
+```sh
+cmake -S . -B build
+cmake --build build
+```
 
 ## Install
+
 ### XMake
-#### Linux
-After building the project, enter `xmake install` to install Strex. By default, the installation directory is `/usr/local`. You can use `-o` to specify the installation location, for example, `xmake install -o path/to/an/empty/directory`. If you have a permission error, add `--admin` option and try again.
 
-By the way, `/usr/local/lib` is not in the default search path in most Linux distributions. If you want to use Strex as a library in your program, you may need to manually specify the link options, or you can add `/usr/local/lib` to the default search path.
-
-#### Windows
-After building the project, enter `xmake install -o "path\to\an\empty\directory"` to install Strex to the specified directory. If you have a permission error, add `--admin` option and try again.
+```sh
+xmake install -o path/to/install/dir
+```
 
 ### CMake
-At the `build` directory, enter `cmake .. -DCMAKE_INSTALL_PREFIX=path/to/an/empty/directory` to config the installation directory. Then execute `make install` to install Strex.
 
-If `CMAKE_INSTALL_PREFIX` is not specified, the default installation path is `/usr/local` on Linux, `C:\Program Files (x86)\strex` on Windows.
+```sh
+cmake --install build --prefix path/to/install/dir
+```
 
-## Examples
-Generate IPv4 address.
+Both commands install the `strex` executable, the static and shared libraries, and the public header.
+
+## Usage
+
+### Command line
+
+Generate a string from a regular expression:
+
+```sh
+xmake run strex -r "<regex>"       # built with XMake
+./build/strex -r "<regex>"         # built with CMake
+```
+
+Use `-n` to generate several strings at once. This command generates 10 strings:
+
+```sh
+xmake run strex -r "<regex>" -n 10
+```
+
+Example — generate IPv4 addresses:
+
+```sh
+$ ./build/strex -r "((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.){3}((25[0-5]|(2[0-4]|1\d|[1-9]|)\d))" -n 5
+2.230.109.255
+23.254.57.0
+176.40.252.42
+235.43.9.252
+2.218.3.239
+```
+
+Run `strex --help` to see all options.
+
+When `strex` is started without arguments, it reads regular expressions from standard input, one per line, and prints a generated string for each line. Invalid patterns print an error message, and the program keeps reading:
+
+```sh
+$ strex
+a|b|c
+a
+\d{3}-\d{4}
+451-7826
+```
+
+### Library
+
+Generate a random IPv4 address:
 
 ```c++
 #include <print>
@@ -65,7 +98,7 @@ int main() {
 }
 ```
 
-`std::string strex::from_regex(std::string_view regex)` will parse the regular expression **every time** it is called. If you want to generate multiple strings based on the same regular expression, you should use `strex::ParsedRegex` to reduce unnecessary parsing.
+`strex::from_regex(std::string_view regex)` parses the regular expression **every time** it is called. To generate many strings from the same expression, parse it once with `strex::ParsedRegex`:
 
 ```c++
 #include <print>
@@ -79,7 +112,7 @@ int main() {
 }
 ```
 
-Specify a seed to generate a deterministic string.
+Pass a seed to get a fixed result. The same seed and regex always produce the same string:
 
 ```c++
 #include <print>
@@ -93,3 +126,92 @@ int main() {
         std::println("{}", strex::from_regex(parsed, 0));
 }
 ```
+
+An invalid pattern makes `strex::ParsedRegex` and the `from_regex` functions throw an exception: `strex::LexicalError` for lexical errors, `strex::ParseError` for grammar errors, and `strex::SyntaxNotSupport` for unsupported syntax. All of them derive from `std::runtime_error`.
+
+## Supported syntax
+
+| Syntax | Description |
+| ------ | ----------- |
+| `abc` | literal characters |
+| `.` | any character |
+| `[abc]`, `[^abc]`, `[a-z]` | character classes, negated classes, and ranges |
+| `\d` `\D` `\s` `\S` `\w` `\W` | predefined character classes |
+| `\f` `\n` `\r` `\t` `\v` `\\` `\'` `\"` `\cX` | escaped characters |
+| `\xHH`, `\uHHHH` | escaped characters in hex form (values up to 0xFF) |
+| `*` `+` `?` `{n}` `{n,}` `{n,m}` | quantifiers |
+| `a\|b` | alternation |
+| `(...)`, `(?:...)`, `(?<name>...)` | capturing, non-capturing, and named groups |
+| `\1` ... `\255`, `\k<name>` | backreferences |
+
+Each repetition runs on its own, so `(a|b){3}` can produce mixed output such as `bab`. A backreference produces nothing when its group did not run, for example `(?:(a)|b)\1` generates `aa` or `b`.
+
+Not supported:
+
+- anchors `^` and `$`
+- word boundaries `\b` and `\B`
+- lookahead and lookbehind: `(?=...)`, `(?!...)`, `(?<=...)`, `(?<!...)`
+- Unicode
+
+## Limitations
+
+- Open-ended quantifiers have an upper bound of 3: `x*` repeats 0 to 3 times, `x+` repeats 1 to 3 times, and `x{n,}` repeats n to n+3 times. The actual count is picked at random from that range.
+- A pattern can contain at most 255 groups.
+- A pattern that matches no string, such as `[]`, is rejected with an error.
+- Exact repeats have no upper bound. `x{1000000000}` is accepted and the program tries to build the full string, so huge counts can run out of memory.
+- Character classes and `.` are limited to ASCII. `.` and negated classes such as `[^a]` can produce control characters, for example `\x01`.
+
+## Known issues
+
+- Parsing patterns in parallel is not safe: the character set cache inside the library is not synchronized. Generating strings in parallel is safe.
+- Deeply nested repeats, such as `((((a{2}){2})...))`, multiply into huge totals. Instead of failing with a clean out-of-memory error, the program can consume all available memory and slow down the whole machine.
+
+## Development
+
+Run the tests:
+
+```sh
+xmake test                # XMake
+ctest --test-dir build    # CMake
+```
+
+Build and run the benchmarks:
+
+**XMake**
+
+```sh
+xmake f -m release --enable_benchmarks=y
+xmake
+xmake run bench
+```
+
+**CMake**
+
+```sh
+cmake -S . -B build -DSTREX_ENABLE_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+./build/bench
+```
+
+Build with address, leak, and undefined-behavior sanitizers (Linux, debug mode only):
+
+```sh
+xmake f --dev=y -m debug && xmake
+```
+
+## How it works
+
+Strex processes a regular expression in three steps: the lexer splits the pattern into tokens, the parser turns the tokens into AST, and the generator walks the AST and picks characters at random.
+
+## Project structure
+
+```
+benchmark/      benchmarks (nanobench)
+include/strex/  headers; strex.hpp is the only public one
+src/            library sources and the command-line tool
+test/           unit tests (doctest)
+```
+
+## License
+
+Strex is licensed under the [GPL-3.0](LICENSE).
