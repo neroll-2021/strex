@@ -225,6 +225,64 @@ TEST_CASE("backreference begins with 0 is not a backreference") {
     }
 }
 
+TEST_CASE("empty-matching iteration of quantified group") {
+    // ECMA-262 RepeatMatcher: once the lower bound is satisfied, an
+    // iteration that matches empty is rejected and the repetition stops
+    // before it, keeping the captures of the last accepted iteration, so
+    // the backreference replays a non-empty capture. Valid outputs are the
+    // empty string or at least two copies of the letter. libstdc++
+    // std::regex does not implement the guard (it accepts "t" for
+    // "(t?)*\1"), so the output sets are verified manually.
+    std::string pattern;
+    char letter = 'a';
+
+    SUBCASE("optional text") {
+        pattern = "(t?)*\\1";
+        letter = 't';
+    }
+    SUBCASE("empty alternative branch") {
+        pattern = "(a|)+\\1";
+    }
+    SUBCASE("optional capture group") {
+        pattern = "((x)?)*\\2";
+        letter = 'x';
+    }
+
+    Lexer lexer(pattern);
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+
+    for (int i = 0; i < 500; i++) {
+        std::string s = generator.generate();
+        INFO("generated string: \"", s, "\"");
+        bool all_letters = s.find_first_not_of(letter) == std::string::npos;
+        bool valid = s.empty() || (s.size() >= 2 && all_letters);
+        CHECK(valid);
+    }
+}
+
+TEST_CASE("empty iteration accepted to satisfy the lower bound") {
+    // While the lower bound is not yet satisfied, empty iterations are
+    // accepted and count towards it: (a?){3} may generate 0 to 3 'a's.
+    Lexer lexer("(a?){3}");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+
+    for (int i = 0; i < 200; i++) {
+        std::string s = generator.generate();
+        INFO("generated string: \"", s, "\"");
+        REQUIRE(s.size() <= 3);
+        bool valid = s.find_first_not_of('a') == std::string::npos;
+        CHECK(valid);
+    }
+}
+
 TEST_CASE("generate sequence") {
     check("hello world!");
     check("[^ab]cd(ef)\\1g+h?i*jk(\\1)");

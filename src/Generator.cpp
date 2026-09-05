@@ -92,6 +92,52 @@ namespace {
         std::vector<const GroupNode *> groups;
     };
 
+    bool can_match_empty(const ASTNode *node);
+
+    /// Computes whether a subtree has a generation path that produces the
+    /// empty string. `visit(RepeatNode)` only needs the empty-iteration
+    /// guard (and its capture snapshot) when this is possible; the analysis
+    /// errs on the side of "possible", which only costs performance, never
+    /// correctness.
+    class EmptyMatchAnalyzer : public ASTVisitor {
+     public:
+        void visit(const TextNode *node) override { possible = node->text().empty(); }
+
+        void visit(const CharsetNode *) override { possible = false; }
+
+        void visit(const BackrefNode *) override { possible = true; }
+
+        void visit(const SequenceNode *node) override {
+            possible = true;
+            for (const auto &element : node->sequence()) {
+                if (!can_match_empty(element.get())) {
+                    possible = false;
+                    break;
+                }
+            }
+        }
+
+        void visit(const RepeatNode *node) override {
+            possible = node->repeat_lower() == 0 || can_match_empty(node->content());
+        }
+
+        void visit(const GroupNode *node) override { possible = can_match_empty(node->content()); }
+
+        void visit(const AlternationNode *node) override {
+            possible = false;
+            for (const auto &element : node->elements())
+                possible = possible || can_match_empty(element.get());
+        }
+
+        bool possible = false;
+    };
+
+    bool can_match_empty(const ASTNode *node) {
+        EmptyMatchAnalyzer analyzer;
+        node->accept(&analyzer);
+        return analyzer.possible;
+    }
+
 } // namespace
 } // namespace strex
 
@@ -104,11 +150,41 @@ void strex::Generator::visit(const RepeatNode *node) {
     GroupCollector collector;
     node->content()->accept(&collector);
 
+    // The empty-iteration guard can only trigger when the subtree has an
+    // empty generation path; otherwise skip the per-iteration snapshot.
+    const bool may_match_empty = can_match_empty(node->content());
+
     int repeat_count = random(engine_);
+    int accepted = 0;
     while (repeat_count--) {
+        std::size_t size_before = 0;
+        std::unordered_map<const GroupNode *, std::string> snapshot;
+        if (may_match_empty) {
+            // Snapshot the subtree captures before resetting them, i.e. the
+            // state after the last accepted iteration.
+            for (const GroupNode *group : collector.groups) {
+                if (auto it = group_generated_.find(group); it != group_generated_.end())
+                    snapshot.emplace(group, it->second);
+            }
+            size_before = generated_string_.size();
+        }
         for (const GroupNode *group : collector.groups)
             group_generated_.erase(group);
+
         generate(node->content());
+
+        // ECMA-262 RepeatMatcher: once the lower bound is satisfied, an
+        // iteration that matches empty is rejected - the repetition stops
+        // before it and the captures of the last accepted iteration are
+        // kept. While the lower bound is not yet satisfied, empty
+        // iterations are accepted and count towards it.
+        if (may_match_empty && generated_string_.size() == size_before && accepted >= lower) {
+            for (const GroupNode *group : collector.groups)
+                group_generated_.erase(group);
+            group_generated_.merge(snapshot);
+            break;
+        }
+        accepted++;
     }
 }
 
