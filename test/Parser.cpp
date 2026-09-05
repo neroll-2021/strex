@@ -238,6 +238,49 @@ TEST_CASE("charset exclude plain character") {
     check("[^a0_]", "(charset include {})", exclude("0_a"));
 }
 
+TEST_CASE("charset include range") {
+    check("[a-z]", "(charset include {})", characters(LOWER_CHARACTERS));
+}
+
+TEST_CASE("char range with high endpoint") {
+    std::string high_range;
+    for (int ch = 0x61; ch <= 0xff; ch++)
+        high_range.push_back(static_cast<char>(ch));
+    check("[a-\\xff]", "(charset include {})", characters(high_range));
+}
+
+TEST_CASE("negated char range with high endpoint") {
+    std::string high_range;
+    for (int ch = 0x70; ch <= 0xff; ch++)
+        high_range.push_back(static_cast<char>(ch));
+    check("[^\\x70-\\xff]", "(charset include {})", exclude(high_range));
+}
+
+TEST_CASE("invalid char range") {
+    std::string pattern;
+    std::string message;
+
+    SUBCASE("reversed plain endpoints") {
+        pattern = "[z-a]";
+        message = "invalid character range: z-a (0x7a-0x61)";
+    }
+    SUBCASE("high byte before ASCII") {
+        pattern = "[\\x80-a]";
+        message = "invalid character range: \x80-a (0x80-0x61)";
+    }
+    SUBCASE("NUL as endpoint") {
+        pattern = "[\\xff-\\x00]";
+        // The formatted message of a `\x00` endpoint contains a NUL byte.
+        // NOLINTNEXTLINE(bugprone-string-literal-with-embedded-nul)
+        message = "invalid character range: \xff-\x00 (0xff-0x0)";
+    }
+
+    Lexer lexer(pattern);
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    CHECK_THROWS_WITH_AS(parser.parse(), message.c_str(), ParseError);
+}
+
 TEST_CASE("charset include \\d") {
     check(R"([\d])", R"((charset include 0123456789))");
 }

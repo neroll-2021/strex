@@ -1,4 +1,5 @@
 #include <regex>
+#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -83,6 +84,29 @@ TEST_CASE("generate charset exclude") {
     check("[^\\S]");
     check("[^\\w]");
     check("[^\\W]");
+}
+
+TEST_CASE("generate high byte range") {
+    // libstdc++ std::regex rejects character ranges with endpoints above 0x7F
+    // ("Invalid range in bracket expression"), so the output set is verified
+    // manually instead of via check().
+    Lexer lexer("[a-\\xff]");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+
+    std::set<unsigned char> seen;
+    for (int i = 0; i < 5000; i++) {
+        std::string s = generator.generate();
+        REQUIRE(s.size() == 1);
+        auto ch = static_cast<unsigned char>(s[0]);
+        CHECK(ch >= 0x61);
+        CHECK(ch <= 0xff);
+        seen.insert(ch);
+    }
+    CHECK(seen.size() == 159);
 }
 
 TEST_CASE("generate char class") {
