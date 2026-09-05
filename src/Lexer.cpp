@@ -216,6 +216,8 @@ auto strex::Lexer::vertical_bar() -> Token {
 auto strex::Lexer::hyphen() -> Token {
     if (in_charset_ && is_first_in_charset())
         return make_character('-');
+    if (in_charset_ && prev_token().is(TokenType::Caret))
+        return make_character('-');
     if (in_charset_ && !is_end() && peek() == ']')
         return make_character('-');
     if (in_charset_)

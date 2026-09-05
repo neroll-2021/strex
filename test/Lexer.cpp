@@ -171,6 +171,68 @@ TEST_CASE("control character in charset") {
     }
 }
 
+TEST_CASE("continuous hyphen in charset") {
+    Lexer lexer("[---]");
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
+        {TokenType::Left_Bracket, '['},  // [
+        {TokenType::Character, '-'},     // -
+        {TokenType::Hyphen, '-'},        // -
+        {TokenType::Character, '-'},     // -
+        {TokenType::Right_Bracket, ']'}, // ]
+        {TokenType::End, '\0'},
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
+    }
+}
+
+TEST_CASE("continuous hyphen in exclusive charset") {
+    Lexer lexer("[^---]");
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
+        {TokenType::Left_Bracket, '['},  // [
+        {TokenType::Caret, '^'},         // ^
+        {TokenType::Character, '-'},     // -
+        {TokenType::Hyphen, '-'},        // -
+        {TokenType::Character, '-'},     // -
+        {TokenType::Right_Bracket, ']'}, // ]
+        {TokenType::End, '\0'},
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
+    }
+}
+
+TEST_CASE("continuous hyphen in exclusive charset 2") {
+    Lexer lexer("[^--^]");
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
+        {TokenType::Left_Bracket, '['},  // [
+        {TokenType::Caret, '^'},         // ^
+        {TokenType::Character, '-'},     // -
+        {TokenType::Hyphen, '-'},        // -
+        {TokenType::Character, '^'},     // ^
+        {TokenType::Right_Bracket, ']'}, // ]
+        {TokenType::End, '\0'},
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
+    }
+}
+
 TEST_CASE("word boundary in charset") {
     Lexer lexer(R"([\b\B])");
     std::vector<std::pair<strex::TokenType, char>> expect_types = {
