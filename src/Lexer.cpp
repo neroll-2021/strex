@@ -214,12 +214,8 @@ auto strex::Lexer::vertical_bar() -> Token {
 }
 
 auto strex::Lexer::hyphen() -> Token {
-    if (in_charset_ && is_first_in_charset())
-        return make_character('-');
-    if (in_charset_ && prev_token().is(TokenType::Caret))
-        return make_character('-');
-    if (in_charset_ && !is_end() && peek() == ']')
-        return make_character('-');
+    // Inside a charset the role of '-' (range operator, range endpoint, or
+    // literal) depends on the parsing context and is decided by the Parser.
     if (in_charset_)
         return make_token(TokenType::Hyphen);
     return make_character('-');

@@ -172,12 +172,14 @@ TEST_CASE("control character in charset") {
 }
 
 TEST_CASE("continuous hyphen in charset") {
+    // Every '-' inside a charset lexes as a Hyphen token; its role (range
+    // operator, range endpoint, or literal) is decided by the Parser.
     Lexer lexer("[---]");
     std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Left_Bracket, '['},  // [
-        {TokenType::Character, '-'},     // -
         {TokenType::Hyphen, '-'},        // -
-        {TokenType::Character, '-'},     // -
+        {TokenType::Hyphen, '-'},        // -
+        {TokenType::Hyphen, '-'},        // -
         {TokenType::Right_Bracket, ']'}, // ]
         {TokenType::End, '\0'},
     };
@@ -196,9 +198,9 @@ TEST_CASE("continuous hyphen in exclusive charset") {
     std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Left_Bracket, '['},  // [
         {TokenType::Caret, '^'},         // ^
-        {TokenType::Character, '-'},     // -
         {TokenType::Hyphen, '-'},        // -
-        {TokenType::Character, '-'},     // -
+        {TokenType::Hyphen, '-'},        // -
+        {TokenType::Hyphen, '-'},        // -
         {TokenType::Right_Bracket, ']'}, // ]
         {TokenType::End, '\0'},
     };
@@ -217,9 +219,30 @@ TEST_CASE("continuous hyphen in exclusive charset 2") {
     std::vector<std::pair<strex::TokenType, char>> expect_types = {
         {TokenType::Left_Bracket, '['},  // [
         {TokenType::Caret, '^'},         // ^
-        {TokenType::Character, '-'},     // -
+        {TokenType::Hyphen, '-'},        // -
         {TokenType::Hyphen, '-'},        // -
         {TokenType::Character, '^'},     // ^
+        {TokenType::Right_Bracket, ']'}, // ]
+        {TokenType::End, '\0'},
+    };
+    auto tokens = lexer.tokenize();
+    REQUIRE(tokens.size() == expect_types.size());
+    for (std::size_t i = 0; i < tokens.size(); i++) {
+        CHECK(tokens[i].type() == expect_types[i].first);
+        if (tokens[i].is(TokenType::Character)) {
+            CHECK(tokens[i].character() == expect_types[i].second);
+        }
+    }
+}
+
+TEST_CASE("continuous hyphen in the middle of charset") {
+    Lexer lexer("[a--z]");
+    std::vector<std::pair<strex::TokenType, char>> expect_types = {
+        {TokenType::Left_Bracket, '['},  // [
+        {TokenType::Character, 'a'},     // a
+        {TokenType::Hyphen, '-'},        // -
+        {TokenType::Hyphen, '-'},        // -
+        {TokenType::Character, 'z'},     // z
         {TokenType::Right_Bracket, ']'}, // ]
         {TokenType::End, '\0'},
     };
@@ -533,15 +556,15 @@ TEST_CASE("trailing backslash") {
 TEST_CASE("hyphen") {
     Lexer lexer(R"(-[-a-z-]-)");
     std::vector<strex::TokenType> expect_types = {
-        TokenType::Character,     // -
+        TokenType::Character,     // - (outside charset)
         TokenType::Left_Bracket,  // [
-        TokenType::Character,     // -
+        TokenType::Hyphen,        // -
         TokenType::Character,     // a
         TokenType::Hyphen,        // -
-        TokenType::Character,     // b
-        TokenType::Character,     // -
+        TokenType::Character,     // z
+        TokenType::Hyphen,        // -
         TokenType::Right_Bracket, // ]
-        TokenType::Character,     // -
+        TokenType::Character,     // - (outside charset)
         TokenType::End,           // EOF
     };
     auto tokens = lexer.tokenize();
@@ -555,7 +578,7 @@ TEST_CASE("^, $ in charset") {
     Lexer lexer(R"([-^$])");
     std::vector<strex::TokenType> expect_types = {
         TokenType::Left_Bracket,  // [
-        TokenType::Character,     // -
+        TokenType::Hyphen,        // -
         TokenType::Character,     // ^
         TokenType::Character,     // $
         TokenType::Right_Bracket, // ]

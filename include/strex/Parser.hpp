@@ -58,9 +58,10 @@ class Parser {
     /// Returns all characters in character set.
     std::string charset_item_list();
 
-    /// Checks if meets character range.
-    /// A character range has the form `ClassAtom - ClassAtom`, where a
-    /// `ClassAtom` is either a single character or a character class escape.
+    /// Checks if meets a character range.
+    /// A range has the form `ClassAtom - ClassAtom`, where a `ClassAtom` is a
+    /// single character, a character class escape, or a literal '-'
+    /// (`Hyphen` token) serving as either endpoint.
     bool is_char_range();
 
     /// Returns all characters in a character range.
@@ -72,7 +73,7 @@ class Parser {
     /// `Character` token, the alphabet (or its complement) for a `Char_Class`.
     std::string class_atom_text(const Token &token);
 
-    /// Checks if the token can start a character range endpoint.
+    /// Checks if the token can be a single-character range endpoint.
     bool is_class_atom(const Token &token) const;
 
     bool is_atom(TokenType type) const;
@@ -90,6 +91,10 @@ class Parser {
 
     /// Returns the token in current position, not move forward.
     const Token &peek() const;
+
+    /// Returns the token `offset` positions ahead, not move forward.
+    /// Returns the `End` token if that position is past the end.
+    const Token &peek(std::size_t offset) const;
 
     /// Returns the token that in previous position.
     const Token &previous() const;

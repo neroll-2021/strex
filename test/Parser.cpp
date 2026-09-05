@@ -278,6 +278,18 @@ TEST_CASE("invalid char range") {
         pattern = "[^--\\t]";
         message = "invalid character range: --\t (0x2d-0x9)";
     }
+    SUBCASE("reversed hyphen and tab in charset") {
+        pattern = "[--\\t]";
+        message = "invalid character range: --\t (0x2d-0x9)";
+    }
+    SUBCASE("literal hyphen as reversed right endpoint") {
+        pattern = "[a--z]";
+        message = "invalid character range: a-- (0x61-0x2d)";
+    }
+    SUBCASE("literal hyphen as reversed right endpoint before ']'") {
+        pattern = "[1--]";
+        message = "invalid character range: 1-- (0x31-0x2d)";
+    }
 
     Lexer lexer(pattern);
     auto tokens = lexer.tokenize();
@@ -307,6 +319,21 @@ TEST_CASE("charset range starting with hyphen") {
     check("[^--^]", "(charset include {})", exclude(dash_to_caret));
     check("[---]", "(charset include {})", characters("-"));
     check("[^---]", "(charset include {})", exclude("-"));
+}
+
+TEST_CASE("hyphen range after a completed range") {
+    // ECMA-262 NonemptyClassRanges: after a range completes, a leading '-'
+    // starts a new class atom and can form another range ('--c' is the range
+    // 0x2D-0x63); a third '-' pairs with it as the literal endpoint range
+    // ['-','-'].
+    std::string dash_to_c;
+    for (int ch = 0x2D; ch <= 0x63; ch++)
+        dash_to_c.push_back(static_cast<char>(ch));
+
+    check("[a-b--c]", "(charset include {})", characters(dash_to_c));
+    check("[^a-b--c]", "(charset include {})", exclude(dash_to_c));
+    check("[a-b---z]", "(charset include {})", characters("ab-z"));
+    check("[----]", "(charset include {})", characters("-"));
 }
 
 TEST_CASE("charset include \\d") {

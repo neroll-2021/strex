@@ -141,6 +141,43 @@ TEST_CASE("generate charset range starting with hyphen") {
     check("[^---]");
 }
 
+TEST_CASE("generate hyphen range after a completed range") {
+    // After a range completes, '--c' forms the new range 0x2D-0x63 and
+    // '---z' forms ['-','-'] plus the atom 'z'. libstdc++ std::regex
+    // rejects such patterns, so the output sets are verified manually.
+    std::string pattern;
+    bool negated = false;
+
+    SUBCASE("literal hyphen endpoints") {
+        pattern = "[a-b---z]";
+    }
+    SUBCASE("negated range") {
+        pattern = "[^a-b--c]";
+        negated = true;
+    }
+
+    Lexer lexer(pattern);
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+
+    for (int i = 0; i < 500; i++) {
+        std::string s = generator.generate();
+        INFO("generated string: \"", s, "\"");
+        REQUIRE(s.size() == 1);
+        bool valid;
+        if (negated) {
+            auto ch = static_cast<unsigned char>(s[0]);
+            valid = ch < '-' || ch > 'c';
+        } else {
+            valid = s[0] == 'a' || s[0] == 'b' || s[0] == 'z' || s[0] == '-';
+        }
+        CHECK(valid);
+    }
+}
+
 TEST_CASE("generate char class") {
     check("\\d");
     check("\\D");

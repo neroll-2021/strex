@@ -296,32 +296,39 @@ std::string strex::Parser::charset_item_list() {
 }
 
 bool strex::Parser::is_char_range() {
-    // TODO Use scope guard to simplify code.
-    auto position = current_position_;
-    if (!is_class_atom(peek())) {
-        current_position_ = position;
-        return false;
-    }
-    advance();
-    if (!check(TokenType::Hyphen)) {
-        current_position_ = position;
-        return false;
-    }
-    advance();
-    if (!is_class_atom(peek())) {
-        current_position_ = position;
-        return false;
-    }
-    current_position_ = position;
-    return true;
+    // ECMA-262 NonemptyClassRanges: `ClassAtom - ClassAtom ClassContents`,
+    // where a literal '-' (a `Hyphen` token here) can serve as either
+    // endpoint (`ClassAtom :: -`). The shapes are `Atom-Hyphen-Atom`,
+    // `Hyphen-Hyphen-Atom` (leading '-' as the left endpoint) and
+    // `Atom-Hyphen-Hyphen` (trailing '-' as the right endpoint).
+    const Token &current = peek();
+    const Token &next = peek(1);
+    const Token &after_next = peek(2);
+
+    bool left_is_endpoint = is_class_atom(current) || current.is(TokenType::Hyphen);
+    bool right_is_endpoint = is_class_atom(after_next) || after_next.is(TokenType::Hyphen);
+    return left_is_endpoint && next.is(TokenType::Hyphen) && right_is_endpoint;
 }
 
 std::string strex::Parser::char_range() {
+    // A literal '-' (`Hyphen` token) can serve as either endpoint.
     bool left_is_class = check(TokenType::Char_Class);
-    std::string start_text = class_atom_text(advance());
-    advance(); // Hyphen
+    std::string start_text;
+    if (check(TokenType::Hyphen)) {
+        advance();
+        start_text = "-";
+    } else {
+        start_text = class_atom_text(advance());
+    }
+    advance(); // the '-' of the range
     bool right_is_class = check(TokenType::Char_Class);
-    std::string end_text = class_atom_text(advance());
+    std::string end_text;
+    if (check(TokenType::Hyphen)) {
+        advance();
+        end_text = "-";
+    } else {
+        end_text = class_atom_text(advance());
+    }
 
     // ECMA-262 B.1.2.8.1 CharacterRangeOrUnion: in legacy (non-unicode) mode,
     // a range whose endpoint is a character class escape (e.g. \d) degenerates
@@ -390,6 +397,15 @@ bool strex::Parser::check(TokenType expect) const {
 auto strex::Parser::peek() const -> const Token & {
     assert(current_position_ < tokens_.size());
     return tokens_[current_position_];
+}
+
+auto strex::Parser::peek(std::size_t offset) const -> const Token & {
+    assert(current_position_ < tokens_.size());
+    std::size_t position = current_position_ + offset;
+    // The token list always ends with an `End` token.
+    if (position >= tokens_.size())
+        return tokens_.back();
+    return tokens_[position];
 }
 
 auto strex::Parser::previous() const -> const Token & {
