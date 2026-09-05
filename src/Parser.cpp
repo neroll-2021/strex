@@ -321,12 +321,12 @@ bool strex::Parser::is_char_range() {
 }
 
 std::string strex::Parser::char_range() {
-    char start = advance().character();
+    unsigned char start = advance().character();
     advance();
-    char end = advance().character();
+    unsigned char end = advance().character();
     if (start > end)
-        throw ParseError("invalid character range: {}-{} ({:#02x}-{:#02x})", start, end, start,
-                         end);
+        throw ParseError("invalid character range: {}-{} ({:#02x}-{:#02x})",
+                         static_cast<char>(start), static_cast<char>(end), start, end);
     std::string characters;
     characters.resize_and_overwrite(end - start + 1, [=](char *s, std::size_t size) {
         for (std::size_t i = 0; i < size; i++)
