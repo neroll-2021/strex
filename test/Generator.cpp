@@ -208,6 +208,23 @@ TEST_CASE("backreference") {
     check(R"((a?)\1(b+)\2(ccd)\3)");
 }
 
+TEST_CASE("backreference begins with 0 is not a backreference") {
+    // Per ECMA-262, `\0N` is an octal escape, never a backreference, so
+    // `(a)\01` must generate "a\x01". libstdc++ std::regex deviates from the
+    // spec here (it matches none of "a\x01", "aa", "a"), so the output is
+    // verified manually instead of via check().
+    Lexer lexer("(a)\\01");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+    for (int i = 0; i < 50; i++) {
+        std::string s = generator.generate();
+        CHECK(s == std::string("a\x01"));
+    }
+}
+
 TEST_CASE("generate sequence") {
     check("hello world!");
     check("[^ab]cd(ef)\\1g+h?i*jk(\\1)");

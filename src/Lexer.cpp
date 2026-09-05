@@ -377,7 +377,7 @@ auto strex::Lexer::number_after_backslash(char ch) -> Token {
 
     // if is a backreference
     int group_number = decimal_value(first_digit, second_digit);
-    if (!in_charset_ && group_number != 0 && group_number <= group_count_) {
+    if (!in_charset_ && first_digit != '0' && group_number != 0 && group_number <= group_count_) {
         advance();
         if (is_end() || !is_digit(peek()))
             return make_backreference(group_number);
