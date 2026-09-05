@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <memory>
 #include <span>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
@@ -58,10 +59,21 @@ class Parser {
     std::string charset_item_list();
 
     /// Checks if meets character range.
+    /// A character range has the form `ClassAtom - ClassAtom`, where a
+    /// `ClassAtom` is either a single character or a character class escape.
     bool is_char_range();
 
     /// Returns all characters in a character range.
+    /// If either endpoint is a character class escape, the range degenerates
+    /// into a union of both endpoints and a literal '-' instead.
     std::string char_range();
+
+    /// Returns the characters of a class atom: the character itself for a
+    /// `Character` token, the alphabet (or its complement) for a `Char_Class`.
+    std::string class_atom_text(const Token &token);
+
+    /// Checks if the token can start a character range endpoint.
+    bool is_class_atom(const Token &token) const;
 
     bool is_atom(TokenType type) const;
 

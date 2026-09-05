@@ -286,11 +286,7 @@ std::string strex::Parser::charset_item_list() {
         } else if (check(TokenType::Character)) {
             characters.push_back(advance().character());
         } else if (check(TokenType::Char_Class)) {
-            auto cs = Charset::from_char_class(advance().character());
-            if (cs->is_inclusive())
-                characters.append(cs->alphabet());
-            else
-                characters.append(exclude(std::string{cs->alphabet()}));
+            characters.append(class_atom_text(advance()));
         } else if (check(TokenType::Hyphen)) {
             advance();
             characters.push_back('-');
@@ -302,7 +298,7 @@ std::string strex::Parser::charset_item_list() {
 bool strex::Parser::is_char_range() {
     // TODO Use scope guard to simplify code.
     auto position = current_position_;
-    if (!check(TokenType::Character)) {
+    if (!is_class_atom(peek())) {
         current_position_ = position;
         return false;
     }
@@ -312,7 +308,7 @@ bool strex::Parser::is_char_range() {
         return false;
     }
     advance();
-    if (!check(TokenType::Character)) {
+    if (!is_class_atom(peek())) {
         current_position_ = position;
         return false;
     }
@@ -321,9 +317,20 @@ bool strex::Parser::is_char_range() {
 }
 
 std::string strex::Parser::char_range() {
-    unsigned char start = advance().character();
-    advance();
-    unsigned char end = advance().character();
+    bool left_is_class = check(TokenType::Char_Class);
+    std::string start_text = class_atom_text(advance());
+    advance(); // Hyphen
+    bool right_is_class = check(TokenType::Char_Class);
+    std::string end_text = class_atom_text(advance());
+
+    // ECMA-262 B.1.2.8.1 CharacterRangeOrUnion: in legacy (non-unicode) mode,
+    // a range whose endpoint is a character class escape (e.g. \d) degenerates
+    // into a union of both endpoints and the literal '-'.
+    if (left_is_class || right_is_class)
+        return start_text + '-' + end_text;
+
+    auto start = static_cast<unsigned char>(start_text[0]);
+    auto end = static_cast<unsigned char>(end_text[0]);
     if (start > end)
         throw ParseError("invalid character range: {}-{} ({:#02x}-{:#02x})",
                          static_cast<char>(start), static_cast<char>(end), start, end);
@@ -334,6 +341,19 @@ std::string strex::Parser::char_range() {
         return size;
     });
     return characters;
+}
+
+std::string strex::Parser::class_atom_text(const Token &token) {
+    if (token.is(TokenType::Character))
+        return {token.character()};
+    const Charset *cs = Charset::from_char_class(token.character());
+    if (cs->is_inclusive())
+        return std::string{cs->alphabet()};
+    return exclude(std::string{cs->alphabet()});
+}
+
+bool strex::Parser::is_class_atom(const Token &token) const {
+    return token.is_one_of(TokenType::Character, TokenType::Char_Class);
 }
 
 bool strex::Parser::is_atom(TokenType type) const {

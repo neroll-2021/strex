@@ -274,11 +274,39 @@ TEST_CASE("invalid char range") {
         // NOLINTNEXTLINE(bugprone-string-literal-with-embedded-nul)
         message = "invalid character range: \xff-\x00 (0xff-0x0)";
     }
+    SUBCASE("reversed hyphen and tab in negated charset") {
+        pattern = "[^--\\t]";
+        message = "invalid character range: --\t (0x2d-0x9)";
+    }
 
     Lexer lexer(pattern);
     auto tokens = lexer.tokenize();
     Parser parser(tokens);
     CHECK_THROWS_WITH_AS(parser.parse(), message.c_str(), ParseError);
+}
+
+TEST_CASE("char range with character class escape endpoint") {
+    // ECMA-262 B.1.2.8.1 CharacterRangeOrUnion: in legacy mode a range whose
+    // endpoint is a character class escape degenerates into a union of both
+    // endpoints and a literal '-'. No range is formed, and the atom after the
+    // '-' is consumed as a plain member.
+    check("[\\d-\\t-.]", "(charset include {})", characters(DIGIT_CHARACTERS "\t-."));
+    check("[\\d-a-z]", "(charset include {})", characters(DIGIT_CHARACTERS "a-z"));
+    check("[a-\\d]", "(charset include {})", characters("a-" DIGIT_CHARACTERS));
+    check("[\\s-\\12-\\]]", "(charset include {})", characters(SPACE_CHARACTERS "\n-]"));
+}
+
+TEST_CASE("charset range starting with hyphen") {
+    // The '-' right after '[' or '[^' is a literal class atom, so it can be
+    // a range endpoint: '--^' is the range 0x2D-0x5E.
+    std::string dash_to_caret;
+    for (int ch = 0x2D; ch <= 0x5E; ch++)
+        dash_to_caret.push_back(static_cast<char>(ch));
+
+    check("[--^]", "(charset include {})", characters(dash_to_caret));
+    check("[^--^]", "(charset include {})", exclude(dash_to_caret));
+    check("[---]", "(charset include {})", characters("-"));
+    check("[^---]", "(charset include {})", exclude("-"));
 }
 
 TEST_CASE("charset include \\d") {

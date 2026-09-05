@@ -109,6 +109,38 @@ TEST_CASE("generate high byte range") {
     CHECK(seen.size() == 159);
 }
 
+TEST_CASE("generate charset with character class escape endpoint") {
+    // ECMA-262 B.1.2.8.1: a degenerate range emits a union of both endpoints
+    // and a literal '-', so only {'0'-'9', '-', '\t', '.'} can be generated.
+    // libstdc++ std::regex rejects class-escape endpoints ("Invalid start of
+    // '[x-x]' range"), so the output set is verified manually.
+    Lexer lexer("[\\d-\\t-.]");
+    auto tokens = lexer.tokenize();
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    Generator generator(ast.get());
+
+    std::set<unsigned char> seen;
+    for (int i = 0; i < 2000; i++) {
+        std::string s = generator.generate();
+        REQUIRE(s.size() == 1);
+        char ch = s[0];
+        bool valid = (ch >= '0' && ch <= '9') || ch == '-' || ch == '\t' || ch == '.';
+        CHECK(valid);
+        seen.insert(static_cast<unsigned char>(ch));
+    }
+    CHECK(seen.size() == 13);
+}
+
+TEST_CASE("generate charset range starting with hyphen") {
+    // std::regex agrees with the spec on these, unlike the degenerate cases.
+    check("[--^]");
+    check("[^--^]");
+    check("[---]");
+    check("[^---]");
+}
+
 TEST_CASE("generate char class") {
     check("\\d");
     check("\\D");
